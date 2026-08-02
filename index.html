@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RuleForge — بناء وتصدير قواعد فرز البريد لـ Gmail و Outlook</title>
+<title>Siftbox — بناء وتصدير قواعد فرز البريد لـ Gmail و Outlook</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+CjxyZWN0IHdpZHRoPSczMicgaGVpZ2h0PSczMicgcng9JzcnIGZpbGw9JyMyMmMzZGQnLz4KPHBhdGggZD0nTTcgMTFoMTh2MTJIN3onIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBkMTAxMycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJy8+CjxwYXRoIGQ9J003IDEybDkgNyA5LTcnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBkMTAxMycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnLz4KPC9zdmc+">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -58,6 +58,9 @@
 
   .header-actions{ display:flex; align-items:center; gap:10px; }
   .icon-btn{ width:36px; height:36px; border-radius:9px; border:1px solid var(--line); background:var(--panel); color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:.15s; }
+  .icon-btn:disabled{ opacity:.3; cursor:default; }
+  .icon-btn:disabled:hover{ color:var(--muted); border-color:var(--line); }
+  .icon-btn.active{ background:var(--brass-soft); color:var(--brass); border-color:var(--brass); }
   .icon-btn:hover{ color:var(--brass); border-color:var(--brass); }
   .icon-btn svg{ width:17px; height:17px; }
   .popover-wrap{ position:relative; }
@@ -176,6 +179,26 @@
   .inline-check label{ font-size:13px; cursor:pointer; }
 
   .section-title{ font-size:12px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.07em; font-weight:700; margin:30px 0 14px; padding-top:20px; border-top:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; }
+
+  .editor-tabs{ display:flex; gap:4px; background:var(--panel); padding:4px; border-radius:11px; border:1px solid var(--line-soft); width:fit-content; margin:22px 0 20px; }
+  .editor-tab{ padding:8px 20px; border-radius:8px; border:none; background:transparent; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:.15s; }
+  .editor-tab.active{ background:var(--panel-2); color:var(--text); box-shadow:0 0 0 1px var(--line); }
+  .editor-tab:hover:not(.active){ color:var(--text); }
+
+  .advanced-toggle{ display:flex; align-items:center; gap:7px; background:none; border:none; color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; padding:8px 0; margin-top:4px; }
+  .advanced-toggle:hover{ color:var(--brass); }
+  .advanced-toggle svg{ width:12px; height:12px; transition:transform .2s; }
+  .advanced-toggle.open svg{ transform:rotate(180deg); }
+  .advanced-fields{ display:none; }
+  .advanced-fields.open{ display:grid; }
+
+  .commit-bar{ position:sticky; bottom:-1px; background:var(--bg); padding:12px 0 10px; margin:4px 0 6px; border-top:1px solid var(--line-soft); z-index:5; display:flex; gap:8px; }
+  .commit-bar::before{ content:''; position:absolute; inset:-14px 0 auto 0; height:14px; background:linear-gradient(to top, var(--bg), transparent); pointer-events:none; }
+
+  .selection-bar{ display:none; position:fixed; bottom:70px; left:50%; transform:translateX(-50%); background:var(--panel-2); border:1px solid var(--brass); border-radius:12px; padding:10px 16px; box-shadow:0 10px 30px rgba(0,0,0,.4); z-index:75; align-items:center; gap:12px; font-size:12.5px; }
+  .selection-bar.show{ display:flex; }
+  .selection-bar .btn{ padding:7px 12px; font-size:11.5px; }
+  .select-check{ width:16px; height:16px; accent-color:var(--brass); margin-inline-end:8px; flex-shrink:0; }
   .actions-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:4px 20px; }
   .check-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; transition:.15s; }
   .check-row:hover{ background:var(--panel); }
@@ -202,7 +225,14 @@
   .variant-card-actions .icon-btn svg{ width:13px; height:13px; }
   .variant-card-body{ font-size:12.5px; color:var(--muted); line-height:1.7; }
 
-  .export-bar{ border-top:1px solid var(--line); background:var(--bg-2); padding:14px 18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .export-bar{ border-top:1px solid var(--line); background:var(--bg-2); }
+  .export-toggle-row{ display:flex; align-items:center; gap:12px; padding:11px 18px; cursor:pointer; user-select:none; }
+  .export-toggle-label{ font-size:12px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:8px; }
+  .export-toggle-row .icon-btn{ width:26px; height:26px; margin-inline-start:auto; }
+  .export-toggle-row .icon-btn svg{ width:13px; height:13px; transition:transform .2s; }
+  .export-toggle-row.open .icon-btn svg{ transform:rotate(180deg); }
+  .export-groups{ display:none; padding:0 18px 14px; gap:14px; align-items:center; flex-wrap:wrap; }
+  .export-groups.open{ display:flex; }
   .btn-group{ display:flex; gap:8px; padding-inline-end:14px; border-inline-end:1px solid var(--line-soft); flex-wrap:wrap; }
   .btn-group:last-of-type{ border-inline-end:none; padding-inline-end:0; }
   .btn{ border:none; border-radius:10px; padding:10px 15px; font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px; transition:.15s; white-space:nowrap; }
@@ -224,7 +254,7 @@
   .btn-indigo:hover{ background:var(--indigo-soft); color:var(--indigo); }
   .btn-green{ border-inline-start-color:var(--green); }
   .btn-green:hover{ background:var(--green-soft); color:var(--green); }
-  .status{ font-size:11.5px; color:var(--muted); margin-inline-start:auto; }
+  .status{ font-size:11.5px; color:var(--muted); }
   .status.ok{ color:var(--teal); } .status.warn{ color:var(--amber); }
 
   ::-webkit-scrollbar{ width:8px; } ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:10px; }
@@ -311,12 +341,15 @@
     header{ padding:12px; }
     .content{ padding:16px; }
     .name-edit-actions{ width:100%; justify-content:flex-start; }
-    .export-bar{ padding:12px; gap:10px; }
+    .export-toggle-row{ padding:10px 12px; }
+    .export-groups{ padding:0 12px 12px; gap:10px; }
     .btn-group{ padding-inline-end:0; border-inline-end:none; width:100%; }
     .btn-group .btn{ flex:1; justify-content:center; }
-    .status{ order:99; width:100%; margin-inline-start:0; text-align:center; }
+    .status{ order:99; width:100%; text-align:center; }
     .test-page-body{ padding:16px; gap:20px; }
+    .selection-bar{ left:12px; right:12px; transform:none; width:auto; flex-wrap:wrap; justify-content:center; bottom:64px; }
   }
+
 </style>
 </head>
 <body>
@@ -325,7 +358,7 @@
     <div class="brand">
       <button class="sidebar-toggle" id="sidebarToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
       <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></div>
-      <h1>RuleForge<span>أداة احترافية لبناء وتصدير قواعد فرز البريد لـ Gmail و Outlook</span></h1>
+      <h1>Siftbox<span>أداة احترافية لبناء وتصدير قواعد فرز البريد لـ Gmail و Outlook</span></h1>
     </div>
     <div class="header-actions">
       <div class="popover-wrap">
@@ -343,6 +376,7 @@
           <div class="tags-row" id="reservedWordTags"></div>
         </div>
       </div>
+      <button class="icon-btn" id="undoBtn" title="تراجع عن آخر تغيير" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10H9"/></svg></button>
       <button class="icon-btn" id="themeToggle" title="تبديل الوضع الليلي/النهاري"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg></button>
       <div class="tabs" id="accountTabs"></div>
     </div>
@@ -358,7 +392,10 @@
           <button class="btn btn-primary" id="addLabelBtn">+</button>
         </div>
         <div class="field-error" id="newLabelError"></div>
-        <div class="search-row"><input type="text" id="searchLabels" placeholder="بحث في الـ Labels..."></div>
+        <div class="search-row" style="display:flex; gap:6px;">
+          <input type="text" id="searchLabels" placeholder="بحث في الـ Labels والفلاتر..." style="flex:1;">
+          <button class="icon-btn" id="selectModeBtn" title="اختيار تصنيفات للتصدير الجزئي" style="width:36px;height:36px;flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+        </div>
         <div class="health-bar" id="healthBar"></div>
       </div>
       <div class="label-list" id="labelList"></div>
@@ -366,6 +403,12 @@
     <div class="content"><div class="content-inner" id="content"></div></div>
   </main>
   <div class="export-bar">
+    <div class="export-toggle-row" id="exportToggleRow">
+      <span class="export-toggle-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg> خيارات التصدير والأدوات</span>
+      <span class="status" id="statusMsg"></span>
+      <button class="icon-btn" id="exportToggleBtn" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+    </div>
+    <div class="export-groups" id="exportGroups">
     <div class="btn-group">
       <button class="btn btn-cat btn-teal" id="exportGmail"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Gmail XML</button>
       <button class="btn btn-cat btn-teal" id="exportOutlook"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Outlook CSV</button>
@@ -387,9 +430,10 @@
       <button class="btn btn-cat btn-indigo" id="listsBtn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><circle cx="12" cy="12" r="9"/><path d="m5.5 5.5 13 13"/></svg></span> محظورين ومهمين</button>
     </div>
     <button class="btn btn-ghost" id="resetAccount"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></span> مسح Labels الحساب</button>
-    <span class="status" id="statusMsg"></span>
+    </div>
   </div>
 </div>
+<div class="selection-bar" id="selectionBar"></div>
 
 <div class="test-page" id="testPage">
   <div class="test-page-header">
@@ -458,7 +502,7 @@
 <div class="test-page" id="helpPage">
   <div class="test-page-header">
     <button class="btn btn-secondary" id="helpBackBtn"><span style="display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span> رجوع</button>
-    <h2>دليل RuleForge <span>— كل حاجة عن النظام في مكان واحد</span></h2>
+    <h2>دليل Siftbox <span>— كل حاجة عن النظام في مكان واحد</span></h2>
   </div>
   <div class="help-body">
     <nav class="help-toc">
@@ -482,7 +526,7 @@
 
       <section class="help-section" id="h-concept">
         <h3>الفكرة الأساسية</h3>
-        <p>RuleForge أداة بتخليك تبني قواعد فرز بريدك الإلكتروني (Gmail و Outlook) بشكل مرئي وسهل، بدل ما تكتب صيغ بحث معقدة يدوي. تحدد الشروط والإجراءات، والأداة تصدّرلك ملف جاهز:</p>
+        <p>Siftbox أداة بتخليك تبني قواعد فرز بريدك الإلكتروني (Gmail و Outlook) بشكل مرئي وسهل، بدل ما تكتب صيغ بحث معقدة يدوي. تحدد الشروط والإجراءات، والأداة تصدّرلك ملف جاهز:</p>
         <ul>
           <li><b>Gmail</b> → ملف XML قابل للاستيراد المباشر (Settings → Filters → Import filters)</li>
           <li><b>Outlook</b> → ملف CSV مرجعي (Outlook مفيهوش استيراد XML قياسي، فبتستخدمه كمرجع وانت بتعمل الـ Rules يدوي — 3-4 دقايق للقاعدة)</li>
@@ -543,15 +587,31 @@
       <section class="help-section" id="h-export">
         <h3>التصدير</h3>
         <ul>
-          <li><b>Gmail XML</b> — Settings → Filters and Blocked Addresses → Import filters</li>
-          <li><b>Outlook CSV</b> — مرجع تتبعه وانت بتعمل الـ Rules يدوي من Settings → Mail → Rules (أو File → Manage Rules & Alerts في الكلاسيك)</li>
+          <li><b>Gmail XML</b> — استيراد مباشر تماماً: Settings → Filters and Blocked Addresses → Import filters</li>
+          <li><b>Outlook CSV</b> — مرجع تتبعه يدوي (Outlook مفيهوش استيراد حقيقي، التفاصيل تحت)</li>
           <li><b>تصدير كل الحسابات</b> — زرار واحد يصدّر كل حساب عنده تصنيفات صالحة، ملفاته لوحده</li>
         </ul>
+
+        <div class="callout callout-warn"><b>حقيقة مهمة عن Outlook:</b> لا يوجد استيراد حقيقي لملفات القواعد في New Outlook أو Outlook على الويب — الميزة دي شالتها Microsoft بالكامل من الإصدارات الجديدة (مؤكد من شكاوى رسمية على منتدى Microsoft نفسه). حتى Outlook الكلاسيك القديم بيصدّر/يستورد بصيغة <span class="kbd">.rwz</span> فقط، وهي صيغة خاصة بـ Microsoft مش XML أو CSV قياسي، فمفيش طريقة نولّد بيها ملف يتقبل تلقائي. يعني ملف الـ CSV اللي بيطلع من هنا هو **مرجع تتبعه يدوي**، مش ملف استيراد — ده قيد حقيقي في Outlook نفسه، مش نقص في الأداة.</div>
+
+        <p><b>إزاي تطبّق ملف Outlook CSV خطوة بخطوة (New Outlook / Outlook على الويب):</b></p>
+        <ol style="font-size:13.5px; line-height:2; color:var(--muted); padding-inline-start:20px; margin:0 0 14px;">
+          <li>افتح ملف الـ CSV (Excel أو أي برنامج جداول) وسيبه جنبك</li>
+          <li><span class="kbd">⚙ Settings → Mail → Rules → + Add new rule</span></li>
+          <li>اكتب اسم القاعدة (نفس اسم عمود "Label / Folder Path")</li>
+          <li><b>Add condition</b> لكل عمود عنده قيمة: From→From, Subject→Subject includes, Body→Message body includes, فيه مرفق→Has attachment</li>
+          <li><b>Add action</b>: Skip Inbox = Move to (اختار/أنشئ فولدر بنفس اسم الـ Label)، Mark Read = Mark as read، Delete = Delete</li>
+          <li>Save، وكرر لكل صف في الملف (3-4 دقايق للقاعدة)</li>
+          <li>بعد كل القواعد، رتّبهم بنفس أرقام عمود Priority من نفس صفحة Rules (فيها أسهم ▲▼ جنب كل قاعدة)</li>
+        </ol>
+        <div class="callout callout-tip"><b>توفير وقت:</b> افتح إيميل حقيقي من نفس المرسل، دوس يمين ← Rules → Create Rule، وده بيملأ شرط الـ From تلقائي وانت تكمل بس الباقي من الـ CSV.</div>
+        <p style="font-size:12.5px;"><b>Outlook الكلاسيك (Desktop القديم):</b> نفس المنطق، بس من <span class="kbd">File → Manage Rules & Alerts → New Rule</span>، و"Stop Processing" بتضيفها كخطوة أخيرة في الـ Wizard بدل ما تكون مفعّلة افتراضياً.</p>
       </section>
 
       <section class="help-section" id="h-import">
         <h3>الاستيراد</h3>
         <p>لو عندك فلاتر حقيقية شغالة على Gmail فعلاً، صدّرها من هناك (Export) وارفع الملف هنا (⤴ استيراد Gmail XML) — الأداة هتحوّلها لتصنيفات وفلاتر قابلة للتعديل بنفس المنطق، حتى لو أكتر من فلتر بيصبّوا في نفس التصنيف.</p>
+        <div class="callout callout-warn">استيراد من Outlook مش متاح للسبب نفسه اللي فوق — مفيش صيغة قياسية تقدر تطلعها من Outlook أصلاً عشان الأداة تقرأها.</div>
       </section>
 
       <section class="help-section" id="h-test">
@@ -659,10 +719,37 @@ let dragState = null;
 let stagingVariant = null;
 let stagingLabelId = null;
 let editingVariantId = null;
+let labelEditorTab = 'filters';
+let tabForLabelId = null;
+let advancedOpen = false;
+let selectionMode = false;
+let selectedLabelIds = new Set();
+let undoStack = [];
 function hasUnsavedStaging(){ return stagingLabelId && stagingVariant && variantHasCriteria(stagingVariant); }
 function confirmLeaveStaging(){
   if(!hasUnsavedStaging()) return true;
   return confirm('عندك فلتر لسه ماضفتوش (مش محفوظ) — لو غادرت من غير ما تضغط "➕ إضافة فلتر" هتفقده. تكمل؟');
+}
+function pushUndo(){
+  if(!state) return;
+  undoStack.push(JSON.stringify(state));
+  if(undoStack.length > 15) undoStack.shift();
+  updateUndoBtn();
+}
+function undoLast(){
+  if(!undoStack.length) return;
+  const snap = undoStack.pop();
+  state = JSON.parse(snap);
+  if(!state.accounts.find(a => a.id === activeAccountId)) activeAccountId = state.accounts[0].id;
+  if(!currentAccount().labels.find(l => l.id === activeLabelId)) activeLabelId = null;
+  stagingVariant = null; stagingLabelId = null; editingVariantId = null;
+  selectedLabelIds = new Set();
+  saveState(); renderAll(); updateUndoBtn();
+  setStatus('تم التراجع ✓', 'ok');
+}
+function updateUndoBtn(){
+  const btn = document.getElementById('undoBtn');
+  if(btn) btn.disabled = !undoStack.length;
 }
 
 // Storage bridge: use Claude's window.storage when available (inside claude.ai),
@@ -854,11 +941,32 @@ document.querySelectorAll('.help-toc a').forEach(a => a.addEventListener('click'
   if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
 }));
 
+// ---------- Undo ----------
+document.getElementById('undoBtn').addEventListener('click', undoLast);
+
+// ---------- Export-bar collapsible toggle ----------
+const exportToggleRow = document.getElementById('exportToggleRow');
+const exportGroups = document.getElementById('exportGroups');
+function setExportBarOpen(open){
+  exportGroups.classList.toggle('open', open);
+  exportToggleRow.classList.toggle('open', open);
+  try{ localStorage.setItem('export-bar-open', open ? '1' : '0'); }catch(e){}
+}
+exportToggleRow.addEventListener('click', e => {
+  if(e.target.closest('#statusMsg')) return;
+  setExportBarOpen(!exportGroups.classList.contains('open'));
+});
+(function initExportBar(){
+  let open = false;
+  try{ open = localStorage.getItem('export-bar-open') === '1'; }catch(e){}
+  setExportBarOpen(open);
+})();
+
 // ---------- Theme toggle ----------
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme);
   document.getElementById('themeToggle').innerHTML = theme === 'light' ? ICONS.moon : ICONS.sun;
-  try{ localStorage.setItem('filter-ledger-theme', theme); }catch(e){}
+  try{ localStorage.setItem('siftbox-theme', theme); }catch(e){}
 }
 document.getElementById('themeToggle').addEventListener('click', () => {
   const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
@@ -866,7 +974,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 (function initTheme(){
   let saved = 'dark';
-  try{ saved = localStorage.getItem('filter-ledger-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }catch(e){}
+  try{ saved = localStorage.getItem('siftbox-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }catch(e){}
   applyTheme(saved);
 })();
 
@@ -889,6 +997,7 @@ function renderTabs(){
       close.addEventListener('click', e => {
         e.stopPropagation();
         if(acc.labels.length && !confirm(`حذف حساب "${acc.name}" هيمسح ${acc.labels.length} Label. متأكد؟`)) return;
+        pushUndo();
         state.accounts = state.accounts.filter(a => a.id !== acc.id);
         if(activeAccountId === acc.id) activeAccountId = state.accounts[0].id;
         activeLabelId = null; saveState(); renderAll();
@@ -913,6 +1022,11 @@ function renderTabs(){
 function labelMatchesSearch(labels, label, term){
   if(!term) return true;
   if(label.name.toLowerCase().includes(term)) return true;
+  const variantMatch = label.variants.some(v =>
+    ['from','to','subject','body','exclude'].some(k => v[k].some(val => val.toLowerCase().includes(term))) ||
+    (v.advancedQuery && v.advancedQuery.toLowerCase().includes(term))
+  );
+  if(variantMatch) return true;
   const kids = childrenOf(labels, label.id);
   return kids.some(k => labelMatchesSearch(labels, k, term));
 }
@@ -938,6 +1052,7 @@ function renderLabelList(){
     item.style.marginRight = (depth * 18) + 'px';
     item.draggable = true;
     item.innerHTML = `<span class="left" style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;">
+        ${selectionMode ? `<input type="checkbox" class="select-check" ${selectedLabelIds.has(label.id)?'checked':''}>` : ''}
         <span class="drag-handle" title="اسحب لإعادة الترتيب">${ICONS.grip}</span>
         <span class="touch-reorder"><button data-dir="-1" title="أعلى"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="m18 15-6-6-6 6"/></svg></button><button data-dir="1" title="أسفل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="m6 9 6 6 6-6"/></svg></button></span>
         ${kids.length ? `<button class="collapse-btn" title="${collapsed?'إظهار':'إخفاء'} التصنيفات الفرعية">${collapsed?ICONS.chevronLeft:ICONS.chevronDown}</button>` : '<span style="width:14px;display:inline-block;"></span>'}
@@ -946,8 +1061,19 @@ function renderLabelList(){
       </span>
       <span class="right"><button class="add-child-btn" title="إضافة تصنيف فرعي">+</button><span class="count">${valid ? totalConditions : ICONS.warning}</span></span>`;
     item.title = valid ? '' : 'محتاج شرط واحد على الأقل عشان يتصدّر';
+    const selectCheck = item.querySelector('.select-check');
+    if(selectCheck) selectCheck.addEventListener('click', e => {
+      e.stopPropagation();
+      selectCheck.checked ? selectedLabelIds.add(label.id) : selectedLabelIds.delete(label.id);
+      renderSelectionBar();
+    });
     item.addEventListener('click', e => {
-      if(e.target.closest('.add-child-btn') || e.target.closest('.collapse-btn') || e.target.closest('.touch-reorder')) return;
+      if(e.target.closest('.add-child-btn') || e.target.closest('.collapse-btn') || e.target.closest('.touch-reorder') || e.target.closest('.select-check')) return;
+      if(selectionMode){
+        selectedLabelIds.has(label.id) ? selectedLabelIds.delete(label.id) : selectedLabelIds.add(label.id);
+        renderLabelList(); renderSelectionBar();
+        return;
+      }
       if(label.id === activeLabelId) return;
       if(!confirmLeaveStaging()) return;
       activeLabelId = label.id; renderContent(); renderLabelList(); closeDrawer();
@@ -977,7 +1103,7 @@ function renderLabelList(){
     });
     node.appendChild(item);
     list.appendChild(node);
-    if(!collapsed) kids.forEach((child, i) => renderNode(child, depth + 1, i, kids.length));
+    if(!collapsed || term) kids.forEach((child, i) => renderNode(child, depth + 1, i, kids.length));
   }
   const topLevel = childrenOf(labels, null);
   topLevel.forEach((l, i) => renderNode(l, 0, i, topLevel.length));
@@ -986,6 +1112,7 @@ function renderLabelList(){
 
 function addChildLabel(parentId){
   if(!confirmLeaveStaging()) return;
+  pushUndo();
   const labels = currentAccount().labels;
   const parent = labels.find(l => l.id === parentId);
   const siblingNames = childrenOf(labels, parentId).map(l => l.name);
@@ -1005,6 +1132,7 @@ function addChildLabel(parentId){
 
 function duplicateLabel(label){
   if(!confirmLeaveStaging()) return;
+  pushUndo();
   const labels = currentAccount().labels;
   const siblingNames = childrenOf(labels, label.parentId).map(l => l.name);
   const name = uniqueSiblingName(label.name + ' (نسخة)', siblingNames);
@@ -1141,6 +1269,8 @@ function renderContent(){
   const path = getPathNames(labels, label);
   const fullPath = path.join('/');
 
+  if(tabForLabelId !== label.id){ labelEditorTab = 'filters'; tabForLabelId = label.id; }
+
   if(path.length > 1){
     const bc = document.createElement('div'); bc.className = 'breadcrumb';
     bc.innerHTML = path.slice(0,-1).map(p=>escapeHtml(p)).join(' / ') + ' / <b>' + escapeHtml(path[path.length-1]) + '</b>';
@@ -1180,6 +1310,7 @@ function renderContent(){
   document.getElementById('delLabelBtn').addEventListener('click', () => {
     const descendants = getDescendantIds(labels, label.id);
     if(descendants.length && !confirm(`الـ Label ده فيه ${descendants.length} تصنيف فرعي، هيتمسحوا كمان. متأكد؟`)) return;
+    pushUndo();
     const toRemove = new Set([label.id, ...descendants]);
     currentAccount().labels = currentAccount().labels.filter(l => !toRemove.has(l.id));
     activeLabelId = null; saveState(); renderAll();
@@ -1204,9 +1335,28 @@ function renderContent(){
   }
   refreshSummary();
 
+  // ---- Tabs ----
+  const validCount = label.variants.filter(variantHasCriteria).length;
+  const tabsRow = document.createElement('div'); tabsRow.className = 'editor-tabs';
+  tabsRow.innerHTML = `
+    <button class="editor-tab${labelEditorTab==='filters'?' active':''}" data-tab="filters">الفلاتر (${validCount})</button>
+    <button class="editor-tab${labelEditorTab==='actions'?' active':''}" data-tab="actions">الإجراءات</button>`;
+  content.appendChild(tabsRow);
+  tabsRow.querySelectorAll('.editor-tab').forEach(btn => btn.addEventListener('click', () => {
+    if(btn.dataset.tab === labelEditorTab) return;
+    if(!confirmLeaveStaging()) return;
+    stagingVariant = emptyVariant(); editingVariantId = null;
+    labelEditorTab = btn.dataset.tab; renderContent();
+  }));
+
+  if(labelEditorTab === 'filters') renderFiltersTab(content, label, refreshSummary);
+  else renderActionsTab(content, label, refreshSummary);
+}
+
+function renderFiltersTab(content, label, refreshSummary){
   ensureStaging(label.id);
 
-  const stagingTitle = document.createElement('div'); stagingTitle.className = 'section-title';
+  const stagingTitle = document.createElement('div'); stagingTitle.className = 'section-title'; stagingTitle.style.marginTop = '4px';
   stagingTitle.textContent = editingVariantId ? 'تعديل فلتر موجود' : 'بيانات فلتر جديد — املأ الحقول اللي محتاجها بس';
   content.appendChild(stagingTitle);
 
@@ -1221,29 +1371,36 @@ function renderContent(){
       <div class="tags-row" id="tags-${f.key}"></div>`;
     grid.appendChild(block);
   });
-
-  const attBlock = document.createElement('div'); attBlock.className = 'field-block';
-  attBlock.innerHTML = `<label class="title">المرفقات</label><span class="sub">شرط وجود ملف مرفق بالإيميل</span>
-    <div class="inline-check"><input type="checkbox" id="hasAttachment"><label for="hasAttachment">الإيميل فيه مرفق (Has attachment)</label></div>`;
-  grid.appendChild(attBlock);
-
-  const sizeBlock = document.createElement('div'); sizeBlock.className = 'field-block';
-  sizeBlock.innerHTML = `<label class="title">حجم الرسالة</label><span class="sub">فلترة حسب حجم الإيميل كامل</span>
-    <div class="size-row">
-      <select id="sizeOp"><option value="">بدون شرط حجم</option><option value="larger">أكبر من</option><option value="smaller">أصغر من</option></select>
-      <input type="number" id="sizeValue" min="0" placeholder="الرقم">
-      <select id="sizeUnit"><option value="KB">KB</option><option value="MB">MB</option></select>
-    </div>`;
-  grid.appendChild(sizeBlock);
-
-  const advBlock = document.createElement('div'); advBlock.className = 'field-block full';
-  advBlock.innerHTML = `<label class="title">Advanced Query <span style="color:var(--muted-2);font-weight:400;">(اختياري — Gmail فقط)</span></label>
-    <span class="sub">أي عامل بحث متقدم من Gmail، زي filename:pdf أو list:newsletter@x.com أو is:starred — بيتضاف كشرط إضافي (AND) فوق باقي شروط الفلتر ده</span>
-    <input type="text" id="advancedQuery" placeholder="مثال: filename:pdf">`;
-  grid.appendChild(advBlock);
-
   content.appendChild(grid);
   FIELD_DEFS.forEach(f => renderTagInput(f.key, stagingVariant, f.placeholder, () => refreshStagingPreview(label)));
+
+  const advToggle = document.createElement('button');
+  advToggle.className = 'advanced-toggle' + (advancedOpen ? ' open' : '');
+  advToggle.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg> خيارات متقدمة (مرفق / حجم / Advanced Query)`;
+  content.appendChild(advToggle);
+
+  const advGrid = document.createElement('div');
+  advGrid.className = 'conditions-grid advanced-fields' + (advancedOpen ? ' open' : '');
+  advGrid.innerHTML = `
+    <div class="field-block">
+      <label class="title">المرفقات</label><span class="sub">شرط وجود ملف مرفق بالإيميل</span>
+      <div class="inline-check"><input type="checkbox" id="hasAttachment"><label for="hasAttachment">الإيميل فيه مرفق (Has attachment)</label></div>
+    </div>
+    <div class="field-block">
+      <label class="title">حجم الرسالة</label><span class="sub">فلترة حسب حجم الإيميل كامل</span>
+      <div class="size-row">
+        <select id="sizeOp"><option value="">بدون شرط حجم</option><option value="larger">أكبر من</option><option value="smaller">أصغر من</option></select>
+        <input type="number" id="sizeValue" min="0" placeholder="الرقم">
+        <select id="sizeUnit"><option value="KB">KB</option><option value="MB">MB</option></select>
+      </div>
+    </div>
+    <div class="field-block full">
+      <label class="title">Advanced Query <span style="color:var(--muted-2);font-weight:400;">(اختياري — Gmail فقط)</span></label>
+      <span class="sub">أي عامل بحث متقدم من Gmail، زي filename:pdf أو list:newsletter@x.com أو is:starred — بيتضاف كشرط إضافي (AND) فوق باقي شروط الفلتر ده</span>
+      <input type="text" id="advancedQuery" placeholder="مثال: filename:pdf">
+    </div>`;
+  content.appendChild(advGrid);
+  advToggle.addEventListener('click', () => { advancedOpen = !advancedOpen; renderContent(); });
 
   const advEl = document.getElementById('advancedQuery');
   advEl.value = stagingVariant.advancedQuery || '';
@@ -1260,32 +1417,31 @@ function renderContent(){
     refreshStagingPreview(label);
   }));
 
-  const stagingPreview = document.createElement('div'); stagingPreview.id = 'stagingPreview'; stagingPreview.className = 'label-hint';
+  const stagingPreview = document.createElement('div'); stagingPreview.id = 'stagingPreview'; stagingPreview.className = 'label-hint'; stagingPreview.style.marginTop = '14px';
   content.appendChild(stagingPreview);
 
-  const stagingBtnRow = document.createElement('div'); stagingBtnRow.style.cssText = 'display:flex;gap:8px;margin:12px 0 6px;';
-  stagingBtnRow.innerHTML = editingVariantId
+  const commitBar = document.createElement('div'); commitBar.className = 'commit-bar';
+  commitBar.innerHTML = editingVariantId
     ? `<button class="btn btn-primary" id="commitBtn">💾 حفظ التعديل</button><button class="btn btn-secondary" id="cancelEditBtn">إلغاء</button>`
     : `<button class="btn btn-primary" id="commitBtn">➕ إضافة فلتر</button>`;
-  content.appendChild(stagingBtnRow);
-  document.getElementById('commitBtn').addEventListener('click', () => commitVariant(label));
+  content.appendChild(commitBar);
+  document.getElementById('commitBtn').addEventListener('click', () => { pushUndo(); commitVariant(label); });
   const cancelBtn = document.getElementById('cancelEditBtn');
   if(cancelBtn) cancelBtn.addEventListener('click', () => { stagingVariant = emptyVariant(); editingVariantId = null; renderContent(); });
 
   refreshStagingPreview(label);
 
-  const variantsTitle = document.createElement('div'); variantsTitle.className = 'section-title';
+  const variantsTitle = document.createElement('div'); variantsTitle.className = 'section-title'; variantsTitle.style.marginTop = '4px'; variantsTitle.style.paddingTop = '0'; variantsTitle.style.borderTop = 'none';
   variantsTitle.textContent = `الفلاتر الحالية لهذا التصنيف (${label.variants.filter(variantHasCriteria).length})`;
   content.appendChild(variantsTitle);
 
   const variantsList = document.createElement('div'); variantsList.id = 'variantsList';
   content.appendChild(variantsList);
   renderVariantList(label, variantsList);
+}
 
-  const actionsTitle = document.createElement('div'); actionsTitle.className = 'section-title'; actionsTitle.textContent = 'الإجراءات عند التطابق';
-  content.appendChild(actionsTitle);
-
-  const agrid = document.createElement('div'); agrid.className = 'actions-grid';
+function renderActionsTab(content, label, refreshSummary){
+  const agrid = document.createElement('div'); agrid.className = 'actions-grid'; agrid.style.marginTop = '4px';
   agrid.innerHTML = `
     ${checkRow('archive','Skip Inbox — لا يظهر في Inbox')}
     ${checkRow('markRead','Mark as read')}
@@ -1396,6 +1552,7 @@ function editVariant(label, variantId){
 }
 
 function deleteVariant(label, variantId){
+  pushUndo();
   label.variants = label.variants.filter(v => v.id !== variantId);
   if(editingVariantId === variantId){ stagingVariant = emptyVariant(); editingVariantId = null; }
   label.updatedAt = nowISO();
@@ -1444,6 +1601,40 @@ function escapeAttr(s){ return escapeHtml(s); }
 
 document.getElementById('searchLabels').addEventListener('input', e => { labelSearchTerm = e.target.value; renderLabelList(); });
 
+document.getElementById('selectModeBtn').addEventListener('click', () => {
+  selectionMode = !selectionMode;
+  document.getElementById('selectModeBtn').classList.toggle('active', selectionMode);
+  if(!selectionMode) selectedLabelIds.clear();
+  renderLabelList(); renderSelectionBar();
+});
+
+function renderSelectionBar(){
+  const bar = document.getElementById('selectionBar');
+  if(!selectionMode || !selectedLabelIds.size){ bar.classList.remove('show'); bar.innerHTML = ''; return; }
+  bar.classList.add('show');
+  bar.innerHTML = `<span><b>${selectedLabelIds.size}</b> Label محدد</span>
+    <button class="btn btn-cat btn-teal" id="exportSelGmail"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Gmail</button>
+    <button class="btn btn-cat btn-teal" id="exportSelOutlook"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Outlook</button>
+    <button class="btn btn-ghost" id="clearSelBtn">إلغاء</button>`;
+  document.getElementById('exportSelGmail').addEventListener('click', () => exportSelected('gmail'));
+  document.getElementById('exportSelOutlook').addEventListener('click', () => exportSelected('outlook'));
+  document.getElementById('clearSelBtn').addEventListener('click', () => { selectedLabelIds.clear(); renderLabelList(); renderSelectionBar(); });
+}
+
+function exportSelected(kind){
+  const acc = currentAccount();
+  const selected = acc.labels.filter(l => selectedLabelIds.has(l.id) && hasCriteria(l));
+  if(!selected.length){ alert('مفيش Label محدد بشروط كافية للتصدير.'); return; }
+  if(kind === 'gmail'){
+    const xml = buildGmailXML(selected, acc.labels, acc);
+    downloadFile(xml, `gmail-filters-selected-${slug(acc.name)}.xml`, 'application/xml');
+  } else {
+    const csv = buildOutlookCSV(selected, acc.labels);
+    downloadFile(csv, `outlook-rules-selected-${slug(acc.name)}.csv`, 'text/csv;charset=utf-8');
+  }
+  setStatus(`تم تصدير ${selected.length} Label محدد ✓`, 'ok');
+}
+
 // ---------- Add label / reset ----------
 document.getElementById('addLabelBtn').addEventListener('click', addLabelFromInput);
 document.getElementById('newLabelInput').addEventListener('keydown', e => { if(e.key === 'Enter') addLabelFromInput(); });
@@ -1456,6 +1647,7 @@ function addLabelFromInput(){
   const err = validateName(name, siblingNames);
   if(err){ errEl.textContent = err; errEl.classList.add('show'); input.classList.add('invalid-input'); return; }
   errEl.classList.remove('show'); input.classList.remove('invalid-input');
+  pushUndo();
   const label = newLabel(name, null);
   currentAccount().labels.push(label);
   activeLabelId = label.id; input.value = '';
@@ -1469,6 +1661,7 @@ document.getElementById('newLabelInput').addEventListener('input', () => {
 document.getElementById('resetAccount').addEventListener('click', () => {
   if(!currentAccount().labels.length) return;
   if(!confirm('هيتم مسح كل الـ Labels في الحساب ده. متأكد؟')) return;
+  pushUndo();
   currentAccount().labels = []; activeLabelId = null; saveState(); renderAll();
 });
 
@@ -1647,7 +1840,7 @@ document.getElementById('exportOutlook').addEventListener('click', () => {
 
 // ---------- Backup / Restore full state ----------
 document.getElementById('backupJson').addEventListener('click', () => {
-  downloadFile(JSON.stringify(state, null, 2), `ruleforge-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+  downloadFile(JSON.stringify(state, null, 2), `siftbox-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
   setStatus('تم تنزيل النسخة الاحتياطية ✓', 'ok');
 });
 document.getElementById('restoreJson').addEventListener('click', () => document.getElementById('restoreJsonFile').click());
@@ -1701,7 +1894,7 @@ function buildSimpleGmailXML(title, values, actionProps){
   const fromVal = values.map(v => `(${v})`).join(' OR ');
   const props = [`<apps:property name='from' value='${xmlEscape(fromVal)}'/>`, ...actionProps];
   const entry = `<entry>\n<category term='filter'></category>\n<title>Mail Filter</title>\n<id>tag:mail.google.com,2008:filter:${Date.now()}</id>\n<updated>${now}</updated>\n<content></content>\n${props.join('\n')}\n</entry>\n`;
-  return `<?xml version='1.0' encoding='UTF-8'?>\n<feed xmlns='http://www.w3.org/2005/Atom' xmlns:apps='http://schemas.google.com/apps/2006'>\n<title>${xmlEscape(title)}</title>\n<id>tag:mail.google.com,2008:filters:${Date.now()}</id>\n<updated>${now}</updated>\n<author><name>RuleForge</name><email>user@gmail.com</email></author>\n${entry}</feed>`;
+  return `<?xml version='1.0' encoding='UTF-8'?>\n<feed xmlns='http://www.w3.org/2005/Atom' xmlns:apps='http://schemas.google.com/apps/2006'>\n<title>${xmlEscape(title)}</title>\n<id>tag:mail.google.com,2008:filters:${Date.now()}</id>\n<updated>${now}</updated>\n<author><name>Siftbox</name><email>user@gmail.com</email></author>\n${entry}</feed>`;
 }
 function buildSimpleCSV(values){
   const rows = [['Email / Domain'], ...values.map(v => [v])];
