@@ -131,17 +131,6 @@ Plain **HTML + CSS + vanilla JavaScript** — a single self-contained file. No b
 
 **Option 2 — Locally:** just download `index.html` and open it in any browser. No server needed.
 
----
-
-## 🗺️ Roadmap ideas
-
-- [ ] Multi-language interface (currently Arabic UI with an English README)
-- [ ] Per-filter (not just per-label) actions
-- [ ] Bulk export as a `.zip` of all accounts
-
-Contributions and suggestions welcome — open an issue or a PR.
-
----
 
 ## 📄 License
 
