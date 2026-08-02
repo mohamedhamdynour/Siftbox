@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RuleForge — بناء وتصدير قواعد فرز البريد لـ Gmail و Outlook</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+CjxyZWN0IHdpZHRoPSczMicgaGVpZ2h0PSczMicgcng9JzcnIGZpbGw9JyMyMmMzZGQnLz4KPHBhdGggZD0nTTcgMTFoMTh2MTJIN3onIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBkMTAxMycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJy8+CjxwYXRoIGQ9J003IDEybDkgNyA5LTcnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBkMTAxMycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnLz4KPC9zdmc+">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1013; --bg-2:#12161a; --panel:#161b20; --panel-2:#1c222a;
+    --line:#262e37; --line-soft:#1e252c; --text:#e8ecf1; --muted:#7c8794; --muted-2:#565f6b;
+    --brass:#22c3dd; --brass-soft:rgba(34,195,221,.14);
+    --teal:#4fd6c4; --teal-soft:rgba(79,214,196,.14);
+    --violet:#9d8ce8; --violet-soft:rgba(157,140,232,.14);
+    --indigo:#7ba7e8; --indigo-soft:rgba(123,167,232,.14);
+    --green:#6bcf8f; --green-soft:rgba(107,207,143,.14);
+    --danger:#e5646a; --danger-soft:rgba(229,100,106,.12);
+    --amber:#e8b34d; --amber-soft:rgba(232,179,77,.14);
+    --sans:'Inter', -apple-system, "Segoe UI", Tahoma, sans-serif;
+    --display:'Space Grotesk', 'Inter', sans-serif;
+    --mono:'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  }
+  [data-theme="light"]{
+    --bg:#f4f8fa; --bg-2:#ffffff; --panel:#ffffff; --panel-2:#eef4f6;
+    --line:#d7e2e6; --line-soft:#e4edf0; --text:#132228; --muted:#5b7178; --muted-2:#8199a1;
+    --brass:#0891a8; --brass-soft:rgba(8,145,168,.10);
+    --teal:#0d9c8a; --teal-soft:rgba(13,156,138,.10);
+    --violet:#7a67d6; --violet-soft:rgba(122,103,214,.10);
+    --indigo:#3d78c9; --indigo-soft:rgba(61,120,201,.10);
+    --green:#2e9e5b; --green-soft:rgba(46,158,91,.10);
+    --danger:#d1454c; --danger-soft:rgba(209,69,76,.10);
+    --amber:#b8860b; --amber-soft:rgba(184,134,11,.10);
+  }
+  [data-theme="light"] body{
+    background: radial-gradient(ellipse at top left, rgba(8,145,168,.05), transparent 45%),
+      radial-gradient(ellipse at bottom right, rgba(13,156,138,.05), transparent 45%), var(--bg);
+  }
+  [data-theme="light"] .brand-mark{ color:#fff; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb{ background:#c3d2d6; }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:
+      radial-gradient(ellipse at top left, rgba(34,195,221,.05), transparent 45%),
+      radial-gradient(ellipse at bottom right, rgba(79,214,196,.04), transparent 45%),
+      var(--bg);
+    color:var(--text); font-family:var(--sans); min-height:100vh;
+  }
+  .app{ display:flex; flex-direction:column; height:100vh; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--line); background:var(--bg-2); flex-wrap:wrap; gap:12px; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .sidebar-toggle{ display:none; width:36px; height:36px; border-radius:9px; border:1px solid var(--line); background:var(--panel); color:var(--text); font-size:16px; cursor:pointer; align-items:center; justify-content:center; flex-shrink:0; }
+  .brand-mark{ width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg, var(--brass), #0e7490); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; color:#0d1013; font-size:15px; flex-shrink:0; }
+  header h1{ font-size:14.5px; margin:0; font-weight:600; font-family:var(--display); letter-spacing:.2px;}
+  header h1 span{color:var(--muted); font-weight:400; font-size:11px; display:block; margin-top:2px; font-family:var(--sans);}
+
+  .header-actions{ display:flex; align-items:center; gap:10px; }
+  .icon-btn{ width:36px; height:36px; border-radius:9px; border:1px solid var(--line); background:var(--panel); color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:.15s; }
+  .icon-btn:hover{ color:var(--brass); border-color:var(--brass); }
+  .icon-btn svg{ width:17px; height:17px; }
+  .popover-wrap{ position:relative; }
+  .popover{ display:none; position:absolute; top:calc(100% + 8px); left:0; width:320px; background:var(--bg-2); border:1px solid var(--line); border-radius:12px; padding:16px; z-index:70; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .popover.show{ display:block; }
+  .popover .sub{ font-size:11.5px; color:var(--muted-2); line-height:1.6; display:block; }
+  .popover-backdrop{ display:none; position:fixed; inset:0; z-index:60; }
+  .popover-backdrop.show{ display:block; }
+
+  .tabs{ display:flex; gap:6px; align-items:center; background:var(--panel); padding:5px; border-radius:11px; border:1px solid var(--line-soft); max-width:56vw; overflow-x:auto; }
+  .tab{ position:relative; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:12.5px; color:var(--muted); border:1px solid transparent; user-select:none; display:flex; align-items:center; gap:7px; transition:.15s; flex-shrink:0; }
+  .tab:hover{ color:var(--text); }
+  .tab.active{ background:var(--panel-2); color:var(--text); border-color:var(--line); font-weight:600;}
+  .tab input{ background:transparent; border:none; color:inherit; font:inherit; width:58px; text-align:center; outline:none;}
+  .tab-close{ width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--muted-2); font-size:11px; cursor:pointer; flex-shrink:0; }
+  .tab-close:hover{ background:var(--danger); color:#fff; }
+  .tab-add{ width:28px; height:28px; border-radius:8px; border:1px dashed var(--line); background:none; color:var(--muted); cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; transition:.15s; flex-shrink:0; }
+  .tab-add:hover{ border-color:var(--brass); color:var(--brass); }
+
+  main{ flex:1; display:flex; overflow:hidden; position:relative; }
+  .backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:40; }
+  .backdrop.show{ display:block; }
+  .sidebar{ width:280px; border-inline-start:1px solid var(--line); background:var(--bg-2); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; transition:transform .2s; }
+  .sidebar-head{ padding:14px; border-bottom:1px solid var(--line); }
+  .eyebrow{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-2); margin-bottom:9px; font-weight:600; }
+  .add-label-row{ display:flex; gap:6px; }
+  .add-label-row input{ flex:1; min-width:0; }
+  .search-row{ margin-top:9px; }
+  .search-row input{ width:100%; font-size:12.5px; padding:8px 10px; }
+  .health-bar{ margin-top:11px; display:flex; gap:10px; flex-wrap:wrap; font-size:11px; color:var(--muted-2); cursor:pointer; }
+  .health-bar b{ color:var(--text); font-family:var(--mono); }
+  .health-bar .warn-stat b{ color:var(--amber); }
+  .health-bar .conflict-stat b{ color:var(--danger); }
+  .health-bar:hover{ color:var(--teal); }
+  .field-error{ font-size:11.5px; color:var(--danger); margin-top:7px; display:none; }
+  .field-error.show{ display:block; }
+  .label-list{ overflow-y:auto; flex:1; padding:10px; }
+  .label-node{ margin-bottom:3px; }
+  .label-item{ padding:10px 10px; border-radius:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:6px; border:1px solid transparent; transition:.15s; }
+  .label-item:hover{ background:var(--panel); }
+  .label-item.active{ background:var(--panel-2); border-color:var(--brass); }
+  .label-item .name{ font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .label-item .name .tw{ color:var(--muted-2); font-weight:400; margin-left:4px;}
+  .label-item .right{ display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .label-item .count{ font-size:10.5px; color:var(--muted); background:var(--bg); padding:2px 8px; border-radius:20px; font-family:var(--mono);}
+  .label-item.invalid .count{ color:var(--danger); }
+  .add-child-btn{ width:20px; height:20px; border-radius:6px; border:none; background:transparent; color:var(--muted-2); font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:.15s; }
+  .label-item:hover .add-child-btn{ opacity:1; }
+  .add-child-btn:hover{ background:var(--brass-soft); color:var(--brass); }
+  .prio-badge{ font-size:9.5px; color:var(--muted-2); font-family:var(--mono); background:var(--bg); border-radius:5px; padding:2px 5px; flex-shrink:0; }
+  .drag-handle{ cursor:grab; color:var(--muted-2); font-size:12px; letter-spacing:-2px; flex-shrink:0; opacity:0; transition:.15s; padding:0 1px; }
+  .label-item:hover .drag-handle{ opacity:1; }
+  .drag-handle:active{ cursor:grabbing; }
+  .label-item.dragging{ opacity:.35; }
+  .label-item.drag-over{ border-color:var(--teal); box-shadow:inset 0 0 0 1px var(--teal); }
+  .collapse-btn{ width:14px; height:14px; border:none; background:transparent; color:var(--muted-2); font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:0; }
+  .collapse-btn:hover{ color:var(--brass); }
+  .collapse-btn svg{ width:11px; height:11px; }
+  .drag-handle svg{ width:12px; height:12px; }
+  .count svg, .warn-icon svg{ width:11px; height:11px; vertical-align:-1px; }
+  .touch-reorder svg{ width:11px; height:11px; }
+  .sidebar-empty{ color:var(--muted-2); font-size:12.5px; text-align:center; padding:30px 14px; }
+
+  .content{ flex:1; overflow-y:auto; padding:clamp(16px,3.5vw,30px) clamp(16px,4.5vw,40px); min-width:0; }
+  .content-inner{ max-width:880px; }
+  .empty{ color:var(--muted); text-align:center; margin-top:100px; font-size:14px; }
+  .empty b{ color:var(--text); display:block; margin-bottom:6px; font-family:var(--display); font-size:16px; }
+
+  .overview-header{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:6px; }
+  .overview-header h2{ font-size:19px; margin:0; font-family:var(--display); font-weight:700; }
+  .overview-header span{ font-size:12px; color:var(--muted-2); font-family:var(--mono); }
+  .overview-list{ display:flex; flex-direction:column; gap:10px; }
+  .overview-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; cursor:pointer; transition:.15s; }
+  .overview-card:hover{ border-color:var(--brass); }
+  .overview-card.child{ background:var(--bg-2); padding:11px 14px; }
+  .overview-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:10px; }
+  .ov-name{ font-size:14.5px; font-weight:700; font-family:var(--display); }
+  .overview-card.child .ov-name{ font-size:13px; font-weight:600; color:var(--muted); }
+  .ov-badge{ font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.04em; flex-shrink:0; }
+  .ov-badge.main{ background:var(--brass-soft); color:var(--brass); }
+  .ov-badge.sub{ background:var(--violet-soft); color:var(--violet); }
+  .overview-filters{ display:flex; flex-direction:column; gap:5px; }
+  .ov-filter{ font-size:12px; color:var(--muted); line-height:1.6; }
+  .ov-filter b{ color:var(--teal); font-family:var(--mono); font-weight:600; }
+  .ov-filter.empty{ color:var(--muted-2); font-style:italic; }
+
+  .breadcrumb{ font-size:12px; color:var(--muted-2); margin-bottom:10px; font-family:var(--mono); }
+  .breadcrumb b{ color:var(--muted); font-weight:500; }
+
+  .summary-box{ background:var(--brass-soft); border:1px solid rgba(34,195,221,.3); border-radius:12px; padding:14px 16px; margin-bottom:26px; font-size:13px; line-height:1.9; color:var(--text); }
+  .summary-box b{ color:var(--brass); }
+  .summary-box.empty-summary{ color:var(--muted-2); background:var(--panel); border-color:var(--line); }
+
+  .conditions-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:24px 32px; margin-bottom:6px; }
+  .field-block.full{ grid-column:1/-1; }
+  .field-block label.title{ display:block; font-size:12.5px; color:var(--text); margin-bottom:2px; font-weight:600; }
+  .field-block .sub{ display:block; font-size:11.5px; color:var(--muted-2); margin-bottom:10px; }
+
+  .field-input-row{ display:flex; gap:8px; }
+  .field-input-row input{ flex:1; min-width:0; }
+  .add-tag-btn{ background:var(--brass-soft); border:1px solid rgba(34,195,221,.35); color:var(--brass); padding:0 16px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:.15s; }
+  .add-tag-btn:hover{ background:rgba(34,195,221,.22); }
+  .tags-row{ display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; min-height:8px; }
+  .tag{ background:var(--panel-2); border:1px solid var(--line); padding:6px 6px 6px 12px; border-radius:20px; font-size:12.5px; display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); width:fit-content; max-width:100%; color:var(--text); }
+  .tag span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tag button{ background:var(--bg); border:none; color:var(--muted); cursor:pointer; font-size:12px; line-height:1; padding:0; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .tag button:hover{ background:var(--danger); color:#fff; }
+
+  input[type=text], input[type=email], input[type=number], select{ background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:9px; font-size:13.5px; outline:none; transition:.15s; font-family:inherit; }
+  input[type=text]:focus, input[type=email]:focus, input[type=number]:focus, select:focus{ border-color:var(--brass); box-shadow:0 0 0 3px var(--brass-soft); }
+  input.invalid-input{ border-color:var(--danger) !important; box-shadow:0 0 0 3px var(--danger-soft) !important; }
+  .size-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .size-row select{ flex:1; min-width:110px; } .size-row input{ width:100px; }
+  .inline-check{ display:flex; align-items:center; gap:9px; padding:11px 12px; background:var(--panel-2); border:1px solid var(--line); border-radius:9px; }
+  .inline-check input{ width:17px; height:17px; accent-color:var(--brass); }
+  .inline-check label{ font-size:13px; cursor:pointer; }
+
+  .section-title{ font-size:12px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.07em; font-weight:700; margin:30px 0 14px; padding-top:20px; border-top:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; }
+  .actions-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:4px 20px; }
+  .check-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; transition:.15s; }
+  .check-row:hover{ background:var(--panel); }
+  .check-row input[type=checkbox]{ width:17px; height:17px; accent-color:var(--brass); }
+  .check-row label{ font-size:13.3px; cursor:pointer; }
+  .forward-input{ margin-top:2px; margin-right:12px; display:none; grid-column:1/-1; }
+  .forward-input.show{ display:block; }
+  .forward-input input{ width:min(320px,100%); }
+
+  .name-edit{ display:flex; align-items:center; gap:12px; margin-bottom:4px; flex-wrap:wrap; }
+  .name-edit input{ font-size:18px; font-weight:700; font-family:var(--display); padding:7px 12px; width:min(320px,100%); }
+  .name-edit-actions{ display:flex; gap:8px; margin-inline-start:auto; flex-wrap:wrap; }
+  .del-label-btn, .add-sub-btn{ background:none; border:1px solid var(--line); color:var(--muted); border-radius:9px; padding:8px 14px; font-size:12px; cursor:pointer; transition:.15s; white-space:nowrap; }
+  .del-label-btn:hover{ background:var(--danger-soft); color:var(--danger); border-color:var(--danger); }
+  .add-sub-btn:hover{ background:var(--brass-soft); color:var(--brass); border-color:var(--brass); }
+  .name-error{ font-size:11.5px; color:var(--danger); margin-bottom:10px; min-height:14px; }
+  .label-hint{ font-size:11.5px; color:var(--muted-2); margin-bottom:22px; }
+
+  .variant-card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+  .variant-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .variant-num{ font-size:11px; font-weight:700; color:var(--brass); font-family:var(--mono); text-transform:uppercase; letter-spacing:.04em; }
+  .variant-card-actions{ display:flex; gap:6px; }
+  .variant-card-actions .icon-btn{ width:28px; height:28px; border-radius:7px; }
+  .variant-card-actions .icon-btn svg{ width:13px; height:13px; }
+  .variant-card-body{ font-size:12.5px; color:var(--muted); line-height:1.7; }
+
+  .export-bar{ border-top:1px solid var(--line); background:var(--bg-2); padding:14px 18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .btn-group{ display:flex; gap:8px; padding-inline-end:14px; border-inline-end:1px solid var(--line-soft); flex-wrap:wrap; }
+  .btn-group:last-of-type{ border-inline-end:none; padding-inline-end:0; }
+  .btn{ border:none; border-radius:10px; padding:10px 15px; font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px; transition:.15s; white-space:nowrap; }
+  .btn span{ font-size:13px; }
+  .btn-primary{ background:var(--brass); color:#12161a; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-secondary{ background:var(--panel-2); color:var(--text); border:1px solid var(--line); }
+  .btn-secondary:hover{ border-color:var(--teal); color:var(--teal); }
+  .btn-ghost{ background:none; color:var(--muted-2); border:1px dashed var(--line); }
+  .btn-ghost:hover{ color:var(--danger); border-color:var(--danger); }
+  .btn-cat{ background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-inline-start:3px solid transparent; }
+  .btn-teal{ border-inline-start-color:var(--teal); }
+  .btn-teal:hover{ background:var(--teal-soft); color:var(--teal); }
+  .btn-amber{ border-inline-start-color:var(--brass); }
+  .btn-amber:hover{ background:var(--brass-soft); color:var(--brass); }
+  .btn-violet{ border-inline-start-color:var(--violet); }
+  .btn-violet:hover{ background:var(--violet-soft); color:var(--violet); }
+  .btn-indigo{ border-inline-start-color:var(--indigo); }
+  .btn-indigo:hover{ background:var(--indigo-soft); color:var(--indigo); }
+  .btn-green{ border-inline-start-color:var(--green); }
+  .btn-green:hover{ background:var(--green-soft); color:var(--green); }
+  .status{ font-size:11.5px; color:var(--muted); margin-inline-start:auto; }
+  .status.ok{ color:var(--teal); } .status.warn{ color:var(--amber); }
+
+  ::-webkit-scrollbar{ width:8px; } ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:10px; }
+
+  /* ---------- Dedicated Test page ---------- */
+  .test-page{ display:none; position:fixed; inset:0; background:var(--bg); z-index:80; overflow-y:auto; }
+  .test-page.show{ display:block; }
+  .test-page-header{ display:flex; align-items:center; gap:16px; padding:16px 24px; border-bottom:1px solid var(--line); background:var(--bg-2); position:sticky; top:0; }
+  .test-page-header h2{ font-size:15px; margin:0; font-family:var(--display); font-weight:600; }
+  .test-page-header h2 span{ color:var(--brass); font-family:var(--sans); font-weight:500; font-size:12.5px; }
+  .test-page-body{ display:grid; grid-template-columns:minmax(300px,420px) 1fr; gap:28px; padding:28px 32px; max-width:1200px; margin:0 auto; align-items:start; }
+  @media (max-width: 860px){ .test-page-body{ grid-template-columns:1fr; } }
+
+  .email-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .email-field{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line-soft); }
+  .email-field label{ width:54px; flex-shrink:0; font-size:11.5px; color:var(--muted-2); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .email-field input{ flex:1; background:transparent; border:none; padding:6px 0; font-size:13.5px; }
+  .email-field input:focus{ box-shadow:none; border:none; }
+  .email-body-field{ padding:14px 16px; }
+  .email-body-field label{ display:block; font-size:11.5px; color:var(--muted-2); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+  .email-body-field textarea{ width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:9px; color:var(--text); padding:12px; font-size:13.5px; font-family:inherit; resize:vertical; outline:none; }
+  .email-body-field textarea:focus{ border-color:var(--brass); box-shadow:0 0 0 3px var(--brass-soft); }
+  .email-attachment{ display:flex !important; align-items:center; gap:8px; margin-top:12px; font-size:12.5px; color:var(--muted); cursor:pointer; text-transform:none; letter-spacing:0; font-weight:500; }
+  .email-attachment input{ flex:none; width:16px; height:16px; accent-color:var(--brass); }
+
+  .test-side{ display:flex; flex-direction:column; gap:8px; }
+  .test-side-block{ margin-bottom:12px; }
+  .test-results{ display:flex; flex-direction:column; gap:8px; }
+  .test-hit{ background:var(--brass-soft); border:1px solid rgba(34,195,221,.3); border-radius:9px; padding:11px 14px; font-size:12.5px; }
+  .test-hit b{ color:var(--brass); font-family:var(--mono); font-size:13px; }
+  .test-hit .reasons{ color:var(--muted); margin-top:3px; }
+  .test-empty{ color:var(--muted-2); font-size:12.5px; background:var(--panel); border:1px solid var(--line-soft); border-radius:9px; padding:12px 14px; }
+
+  .conflicts-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .conflicts-table th{ text-align:right; color:var(--muted-2); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; padding:8px 10px; border-bottom:1px solid var(--line); }
+  .conflicts-table td{ padding:9px 10px; border-bottom:1px solid var(--line-soft); color:var(--text); }
+  .conflicts-table tr:hover td{ background:var(--panel); }
+  .conflicts-table .warn-icon{ color:var(--amber); }
+  .conflicts-table .val{ font-family:var(--mono); color:var(--muted); font-size:11px; }
+
+  .lists-body{ grid-template-columns:1fr 1fr !important; }
+  .list-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  .list-card .sub{ display:block; font-size:11.5px; color:var(--muted-2); margin:4px 0 14px; line-height:1.6; }
+  .list-card .btn{ margin-top:8px; margin-inline-end:8px; }
+  @media (max-width: 860px){ .lists-body{ grid-template-columns:1fr !important; } }
+
+  /* ---------- Help / Guide page ---------- */
+  .help-body{ display:grid; grid-template-columns:220px 1fr; gap:36px; padding:28px 32px; max-width:1100px; margin:0 auto; align-items:start; }
+  .help-toc{ position:sticky; top:20px; display:flex; flex-direction:column; gap:2px; border-inline-start:1px solid var(--line); padding-inline-start:16px; }
+  .help-toc a{ color:var(--muted); text-decoration:none; font-size:12.5px; padding:6px 0; transition:.15s; }
+  .help-toc a:hover{ color:var(--brass); }
+  .help-content{ max-width:720px; }
+  .help-section{ margin-bottom:36px; scroll-margin-top:20px; }
+  .help-section h3{ font-family:var(--display); font-size:16.5px; font-weight:700; margin:0 0 12px; color:var(--text); display:flex; align-items:center; gap:8px; }
+  .help-section h3::before{ content:''; width:4px; height:16px; background:var(--brass); border-radius:3px; display:inline-block; }
+  .help-section p{ font-size:13.5px; line-height:1.9; color:var(--muted); margin:0 0 12px; }
+  .help-section ul{ margin:0 0 12px; padding-inline-start:20px; }
+  .help-section li{ font-size:13.5px; line-height:1.9; color:var(--muted); margin-bottom:4px; }
+  .help-section b{ color:var(--text); }
+  .kbd{ font-family:var(--mono); font-size:11.5px; background:var(--panel-2); border:1px solid var(--line); padding:2px 7px; border-radius:5px; color:var(--teal); }
+  .callout{ border-radius:10px; padding:12px 15px; font-size:12.5px; line-height:1.8; margin:10px 0; }
+  .callout-tip{ background:var(--teal-soft); border:1px solid rgba(79,214,196,.3); color:var(--text); }
+  .callout-warn{ background:var(--amber-soft); border:1px solid rgba(232,179,77,.35); color:var(--text); }
+  .callout-example{ background:var(--violet-soft); border:1px solid rgba(157,140,232,.3); color:var(--text); font-family:var(--mono); font-size:12px; }
+  @media (max-width: 860px){ .help-body{ grid-template-columns:1fr; } .help-toc{ position:static; border-inline-start:none; padding-inline-start:0; flex-direction:row; flex-wrap:wrap; gap:10px; } }
+
+  .touch-reorder{ display:none; flex-shrink:0; }
+  @media (hover: none){
+    .drag-handle{ display:none; }
+    .touch-reorder{ display:flex; flex-direction:column; gap:1px; }
+    .touch-reorder button{ width:16px; height:12px; border:none; background:transparent; color:var(--muted-2); font-size:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+    .touch-reorder button:disabled{ opacity:.2; }
+  }
+
+  /* ---------- Responsive breakpoints ---------- */
+  @media (max-width: 880px){
+    .sidebar-toggle{ display:flex; }
+    .sidebar{ position:fixed; top:0; bottom:0; right:0; width:min(300px,84vw); z-index:50; transform:translateX(100%); box-shadow:-8px 0 30px rgba(0,0,0,.4); }
+    .sidebar.open{ transform:translateX(0); }
+    header h1 span{ display:none; }
+    .tabs{ max-width:100%; }
+  }
+  @media (max-width: 620px){
+    header{ padding:12px; }
+    .content{ padding:16px; }
+    .name-edit-actions{ width:100%; justify-content:flex-start; }
+    .export-bar{ padding:12px; gap:10px; }
+    .btn-group{ padding-inline-end:0; border-inline-end:none; width:100%; }
+    .btn-group .btn{ flex:1; justify-content:center; }
+    .status{ order:99; width:100%; margin-inline-start:0; text-align:center; }
+    .test-page-body{ padding:16px; gap:20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <button class="sidebar-toggle" id="sidebarToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></div>
+      <h1>RuleForge<span>أداة احترافية لبناء وتصدير قواعد فرز البريد لـ Gmail و Outlook</span></h1>
+    </div>
+    <div class="header-actions">
+      <div class="popover-wrap">
+        <button class="icon-btn" id="helpBtn" title="دليل الاستخدام الكامل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 2-2 3.5"/><path d="M12 17h.01"/></svg></button>
+      </div>
+      <div class="popover-wrap">
+        <button class="icon-btn" id="reservedWordsBtn" title="كلمات محظورة إضافية"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
+        <div class="popover" id="reservedWordsPanel">
+          <div class="eyebrow">كلمات محظورة إضافية</div>
+          <span class="sub">أي اسم تكتبه هنا هيتمنع من الاستخدام كـ Label، بالإضافة لقائمة أسماء Gmail/Outlook النظامية الأساسية — مفيد لو واجهت رفض اسم معين فعلياً وعايز الأداة تمنعه المرة الجاية.</span>
+          <div class="field-input-row" style="margin-top:10px;">
+            <input type="text" id="reservedWordInput" placeholder="اسم تحب تمنعه">
+            <button class="add-tag-btn" id="reservedWordAddBtn">+ إضافة</button>
+          </div>
+          <div class="tags-row" id="reservedWordTags"></div>
+        </div>
+      </div>
+      <button class="icon-btn" id="themeToggle" title="تبديل الوضع الليلي/النهاري"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg></button>
+      <div class="tabs" id="accountTabs"></div>
+    </div>
+  </header>
+  <div class="popover-backdrop" id="popoverBackdrop"></div>
+  <main>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="eyebrow">Labels في هذا الحساب</div>
+        <div class="add-label-row">
+          <input type="text" id="newLabelInput" placeholder="اسم Label جديد مثال: Finance">
+          <button class="btn btn-primary" id="addLabelBtn">+</button>
+        </div>
+        <div class="field-error" id="newLabelError"></div>
+        <div class="search-row"><input type="text" id="searchLabels" placeholder="بحث في الـ Labels..."></div>
+        <div class="health-bar" id="healthBar"></div>
+      </div>
+      <div class="label-list" id="labelList"></div>
+    </div>
+    <div class="content"><div class="content-inner" id="content"></div></div>
+  </main>
+  <div class="export-bar">
+    <div class="btn-group">
+      <button class="btn btn-cat btn-teal" id="exportGmail"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Gmail XML</button>
+      <button class="btn btn-cat btn-teal" id="exportOutlook"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Outlook CSV</button>
+      <button class="btn btn-cat btn-teal" id="exportAllBtn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> تصدير كل الحسابات</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-cat btn-amber" id="testConflictsBtn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M9 3h6"/><path d="M10 3v6.5L4.7 18.8a1 1 0 0 0 .9 1.4h12.8a1 1 0 0 0 .9-1.4L14 9.5V3"/><path d="M7.5 15h9"/></svg></span> اختبار الفلاتر</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-cat btn-violet" id="importGmail"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg></span> استيراد Gmail XML</button>
+      <input type="file" id="importGmailFile" accept=".xml" style="display:none">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-cat btn-green" id="backupJson"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> نسخة احتياطية</button>
+      <button class="btn btn-cat btn-green" id="restoreJson"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg></span> استعادة نسخة</button>
+      <input type="file" id="restoreJsonFile" accept=".json" style="display:none">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-cat btn-indigo" id="listsBtn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><circle cx="12" cy="12" r="9"/><path d="m5.5 5.5 13 13"/></svg></span> محظورين ومهمين</button>
+    </div>
+    <button class="btn btn-ghost" id="resetAccount"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></span> مسح Labels الحساب</button>
+    <span class="status" id="statusMsg"></span>
+  </div>
+</div>
+
+<div class="test-page" id="testPage">
+  <div class="test-page-header">
+    <button class="btn btn-secondary" id="testBackBtn"><span style="display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span> رجوع</button>
+    <h2>اختبار الفلاتر <span id="testPageAcc"></span></h2>
+  </div>
+  <div class="test-page-body">
+    <div class="email-card">
+      <div class="email-field"><label>From</label><input type="text" id="testFrom" placeholder="sender@example.com"></div>
+      <div class="email-field"><label>To</label><input type="text" id="testTo" placeholder="you@example.com"></div>
+      <div class="email-field"><label>Subject</label><input type="text" id="testSubject" placeholder="عنوان الرسالة"></div>
+      <div class="email-body-field">
+        <label>Body</label>
+        <textarea id="testBody" rows="7" placeholder="نص الرسالة..."></textarea>
+        <label class="email-attachment"><input type="checkbox" id="testAttachment"> <span style="display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.2a3.5 3.5 0 0 1 4.95 4.95L10.83 17.4a1.5 1.5 0 0 1-2.12-2.12l8.49-8.48"/></svg></span> فيه مرفق</label>
+      </div>
+    </div>
+    <div class="test-side">
+      <div class="test-side-block">
+        <div class="section-title" style="margin-top:0;padding-top:0;border-top:none;">Labels هتتفعّل على الإيميل ده</div>
+        <div id="testResults" class="test-results"></div>
+      </div>
+      <div class="test-side-block">
+        <div class="section-title">تعارضات محتملة في هذا الحساب</div>
+        <div id="conflictsWrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="test-page" id="listsPage">
+  <div class="test-page-header">
+    <button class="btn btn-secondary" id="listsBackBtn"><span style="display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span> رجوع</button>
+    <h2>محظورين ومهمين <span id="listsPageAcc"></span></h2>
+  </div>
+  <div class="test-page-body lists-body">
+    <div class="list-card">
+      <div class="section-title" style="margin-top:0;padding-top:0;border-top:none;display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><circle cx="12" cy="12" r="9"/><path d="m5.5 5.5 13 13"/></svg> Blocked Senders</div>
+      <span class="sub">إيميلات أو نطاقات تتحظر تماماً — تتحذف مباشرة فور وصولها (Gmail). للـ Outlook: قايمة مرجعية تضيفها يدوي في إعدادات Blocked Senders.</span>
+      <div class="field-input-row">
+        <input type="text" id="blockedInput" placeholder="domain.com أو address@example.com">
+        <button class="add-tag-btn" id="blockedAddBtn">+ إضافة</button>
+      </div>
+      <div class="tags-row" id="blockedTags"></div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-cat btn-teal" id="exportBlockedGmail"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Gmail XML</button>
+        <button class="btn btn-cat btn-violet" id="exportBlockedCSV"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> CSV مرجعي</button>
+      </div>
+    </div>
+    <div class="list-card">
+      <div class="section-title" style="margin-top:0;padding-top:0;border-top:none;display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="currentColor" stroke="none" style="width:15px;height:15px;"><path d="M12 2.5 15 9l7 .9-5.1 4.8 1.3 6.8L12 18l-6.2 3.5 1.3-6.8L2 9.9 9 9z"/></svg> VIP Senders</div>
+      <span class="sub">إيميلات مهمة — تتنجّم وتتعلّم "مهم" تلقائياً فور وصولها، وميترسلش سبام أبداً.</span>
+      <div class="field-input-row">
+        <input type="text" id="vipInput" placeholder="domain.com أو address@example.com">
+        <button class="add-tag-btn" id="vipAddBtn">+ إضافة</button>
+      </div>
+      <div class="tags-row" id="vipTags"></div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-cat btn-teal" id="exportVipGmail"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> Gmail XML</button>
+        <button class="btn btn-cat btn-violet" id="exportVipCSV"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span> CSV مرجعي</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="test-page" id="helpPage">
+  <div class="test-page-header">
+    <button class="btn btn-secondary" id="helpBackBtn"><span style="display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span> رجوع</button>
+    <h2>دليل RuleForge <span>— كل حاجة عن النظام في مكان واحد</span></h2>
+  </div>
+  <div class="help-body">
+    <nav class="help-toc">
+      <div class="eyebrow">المحتويات</div>
+      <a href="#h-concept">الفكرة الأساسية</a>
+      <a href="#h-accounts">الحسابات</a>
+      <a href="#h-labels">التصنيفات (Labels)</a>
+      <a href="#h-filters">الفلاتر داخل التصنيف</a>
+      <a href="#h-logic">منطق AND / OR</a>
+      <a href="#h-actions">الإجراءات</a>
+      <a href="#h-priority">الأولوية والترتيب</a>
+      <a href="#h-export">التصدير: Gmail و Outlook</a>
+      <a href="#h-import">الاستيراد</a>
+      <a href="#h-test">اختبار الفلاتر والتعارضات</a>
+      <a href="#h-lists">المحظورين والمهمين</a>
+      <a href="#h-reserved">الأسماء المحجوزة</a>
+      <a href="#h-backup">النسخ الاحتياطي</a>
+      <a href="#h-tips">نصائح سريعة</a>
+    </nav>
+    <div class="help-content">
+
+      <section class="help-section" id="h-concept">
+        <h3>الفكرة الأساسية</h3>
+        <p>RuleForge أداة بتخليك تبني قواعد فرز بريدك الإلكتروني (Gmail و Outlook) بشكل مرئي وسهل، بدل ما تكتب صيغ بحث معقدة يدوي. تحدد الشروط والإجراءات، والأداة تصدّرلك ملف جاهز:</p>
+        <ul>
+          <li><b>Gmail</b> → ملف XML قابل للاستيراد المباشر (Settings → Filters → Import filters)</li>
+          <li><b>Outlook</b> → ملف CSV مرجعي (Outlook مفيهوش استيراد XML قياسي، فبتستخدمه كمرجع وانت بتعمل الـ Rules يدوي — 3-4 دقايق للقاعدة)</li>
+        </ul>
+        <div class="callout callout-tip">كل بياناتك بتتحفظ تلقائياً في متصفحك (نفس الجهاز)، مش محتاج تعمل حاجة يدوي.</div>
+      </section>
+
+      <section class="help-section" id="h-accounts">
+        <h3>الحسابات</h3>
+        <p>فوق الصفحة هتلاقي تابز للحسابات (Personal / Work بشكل افتراضي، ثابتين الاسم). تقدر تضيف حساب إضافي بالـ "+" جنبهم، وتسميه زي ما تحب. كل حساب له تصنيفاته وقوائمه الخاصة، منفصلة تماماً عن باقي الحسابات.</p>
+      </section>
+
+      <section class="help-section" id="h-labels">
+        <h3>التصنيفات (Labels)</h3>
+        <p>التصنيف هو الاسم اللي هيتطبق على الإيميل لما يطابق الشروط (زي "Finance" أو "Newsletters"). تقدر تعمل:</p>
+        <ul>
+          <li><b>تصنيف رئيسي</b> — من مربع الإضافة أعلى القائمة الجانبية</li>
+          <li><b>تصنيف فرعي</b> — بزرار "+" اللي بيظهر عند الـ hover على أي تصنيف، أو زرار "+ تصنيف فرعي" جوه صفحة التصنيف نفسه</li>
+        </ul>
+        <p>التصنيف الفرعي بياخد شكل <span class="kbd">Parent/Child</span> عند التصدير لـ Gmail (نفس صيغة Gmail الرسمية للتصنيفات المتداخلة)، وبياخد إعدادات "الإجراءات" من أبوه تلقائياً وقت الإنشاء (تقدر تعدّلها بعدين).</p>
+        <div class="callout callout-example"><b>مثال:</b> Finance ← Banks ← NBE يبقى Label اسمه فعلياً <span class="kbd">Finance/Banks/NBE</span> في Gmail.</div>
+      </section>
+
+      <section class="help-section" id="h-filters">
+        <h3>الفلاتر داخل التصنيف</h3>
+        <p>التصنيف الواحد ممكن يكون وراه أكتر من فلتر منفصل — كل فلتر بشروط مختلفة، لكن كلهم بيصبّوا في نفس التصنيف. لما تفتح أي Label هتلاقي:</p>
+        <ul>
+          <li><b>صندوق الإدخال</b> (From → Advanced Query) — املأ بس الحقول اللي محتاجها</li>
+          <li><b>زرار "➕ إضافة فلتر"</b> — بيحدد شكل الفلتر تلقائي من الحقول اللي مليتها</li>
+          <li><b>قائمة الفلاتر الحالية</b> — كل فلتر في كارت باسمه (زي Filter (Body) أو Filter (From & Subject))، وتقدر تعدّله أو تحذفه لوحده</li>
+        </ul>
+        <div class="callout callout-tip">لو ضفت قيمة جديدة بنفس "شكل" فلتر موجود (نفس الحقول)، هتندمج معاه تلقائي بدل ما تعمل فلتر مكرر. الأداة بتوريك preview قبل ما تضغط الزرار يقولك هيحصل إيه بالظبط.</div>
+        <div class="callout callout-warn">لو ملّيت الصندوق وانتقلت لتصنيف تاني من غير ما تضغط "إضافة فلتر"، هيظهرلك تنبيه تأكيد عشان متفقدش الشغل.</div>
+      </section>
+
+      <section class="help-section" id="h-logic">
+        <h3>منطق AND / OR — أهم نقطة تفهمها صح</h3>
+        <p>جوه الفلتر الواحد:</p>
+        <ul>
+          <li><b>بين قيم متعددة في نفس الحقل</b> (From فيه نطاقين مثلاً) → <b>OR</b> — يكفي واحدة تتطابق</li>
+          <li><b>بين حقول مختلفة</b> (From و Subject و Body مع بعض) → <b>AND</b> — لازم كل حقل مكتوب فيه شرط يتحقق مع بعض في نفس الإيميل</li>
+        </ul>
+        <div class="callout callout-example"><b>مثال:</b> فلتر فيه From: (nbe.com.eg) وSubject: (فاتورة). الإيميل لازم يكون <b>من nbe.com.eg وعنوانه فيه "فاتورة" مع بعض</b> — مش أي واحد لوحده.</div>
+        <p>لو عايز حالتين مختلفتين تمام (From لوحده في حالة، وSubject+Body في حالة تانية) — ده بالظبط الفرق بين الفلاتر: اعمل فلتر منفصل لكل حالة تحت نفس التصنيف (شوف "الفلاتر داخل التصنيف" فوق).</p>
+      </section>
+
+      <section class="help-section" id="h-actions">
+        <h3>الإجراءات عند التطابق</h3>
+        <p>مشتركة على مستوى التصنيف كله (كل الفلاتر تحته بتنفذ نفس الإجراءات): Skip Inbox, Mark as read, Star it, Never send to Spam, Always/Never mark as important, Delete it, Stop processing more rules (Outlook فقط), Forward to (Gmail فقط).</p>
+      </section>
+
+      <section class="help-section" id="h-priority">
+        <h3>الأولوية والترتيب</h3>
+        <p>امسك أي Label من القائمة الجانبية (مقبض السحب ⋮) واسحبه لترتيبه الجديد بين إخوته. الرقم #1, #2... بيتحدّث تلقائي.</p>
+        <div class="callout callout-warn">الترتيب ده <b>مؤثر فعلياً في Outlook</b> (بيطبّق القواعد بالترتيب وممكن يوقف الباقي). في <b>Gmail مفيش مفهوم "إيقاف باقي القواعد"</b> — كل الفلاتر المطابقة بتتنفذ مع بعض بغض النظر عن الترتيب، فالترتيب هناك مرجعي بس (شكل عرضهم في Settings).</div>
+      </section>
+
+      <section class="help-section" id="h-export">
+        <h3>التصدير</h3>
+        <ul>
+          <li><b>Gmail XML</b> — Settings → Filters and Blocked Addresses → Import filters</li>
+          <li><b>Outlook CSV</b> — مرجع تتبعه وانت بتعمل الـ Rules يدوي من Settings → Mail → Rules (أو File → Manage Rules & Alerts في الكلاسيك)</li>
+          <li><b>تصدير كل الحسابات</b> — زرار واحد يصدّر كل حساب عنده تصنيفات صالحة، ملفاته لوحده</li>
+        </ul>
+      </section>
+
+      <section class="help-section" id="h-import">
+        <h3>الاستيراد</h3>
+        <p>لو عندك فلاتر حقيقية شغالة على Gmail فعلاً، صدّرها من هناك (Export) وارفع الملف هنا (⤴ استيراد Gmail XML) — الأداة هتحوّلها لتصنيفات وفلاتر قابلة للتعديل بنفس المنطق، حتى لو أكتر من فلتر بيصبّوا في نفس التصنيف.</p>
+      </section>
+
+      <section class="help-section" id="h-test">
+        <h3>اختبار الفلاتر والتعارضات</h3>
+        <p>صفحة مستقلة (🧪 اختبار الفلاتر) بتديك:</p>
+        <ul>
+          <li>محاكاة إيميل وهمي (From/To/Subject/Body) وتشوف فوراً أنهي تصنيف هيتفعّل وليه</li>
+          <li>جدول تعارضات محتملة بين تصنيفاتك (لو اتنين عندهم قيمة متشابهة في نفس الحقل)</li>
+        </ul>
+      </section>
+
+      <section class="help-section" id="h-lists">
+        <h3>المحظورين والمهمين</h3>
+        <p>صفحة منفصلة (🚫 محظورين ومهمين) لقوائم بسيطة مش مرتبطة بتصنيف معين: Blocked Senders (يتحذفوا مباشرة) وVIP Senders (يتنجّموا ويتعلّموا مهم تلقائي).</p>
+      </section>
+
+      <section class="help-section" id="h-reserved">
+        <h3>الأسماء المحجوزة</h3>
+        <p>مينفعش تسمي تصنيف بأسماء نظامية زي INBOX أو Sent Items (محجوزة لـ Gmail/Outlook). لو واجهت رفض اسم حقيقي مش في القائمة الأساسية، ضيفه بنفسك من أيقونة القفل 🔒 فوق الصفحة.</p>
+      </section>
+
+      <section class="help-section" id="h-backup">
+        <h3>النسخ الاحتياطي</h3>
+        <p>بياناتك بتتحفظ تلقائي في المتصفح، لكن لو غيّرت جهاز أو متصفح، استخدم "⤓ نسخة احتياطية" لتنزيل كل شيء كملف JSON، و"⤴ استعادة نسخة" لاسترجاعه.</p>
+      </section>
+
+      <section class="help-section" id="h-tips">
+        <h3>نصائح سريعة</h3>
+        <ul>
+          <li>راجع صندوق الملخص النحاسي/السماوي تحت اسم كل تصنيف قبل التصدير — بيوصفلك بالظبط سلوك كل فلتر بالعربي</li>
+          <li>شريط الصحة فوق القائمة الجانبية بيوريك فوراً أي تصنيف ناقص شروط أو فيه تعارض</li>
+          <li>الصفحة الرئيسية للحساب (لما ماتكونش فاتح تصنيف) بتوريك كل تصنيفاتك وفلاترها دفعة واحدة</li>
+        </ul>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'filters-state-v4';
+
+function icn(paths, extra){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra||''}>${paths}</svg>`; }
+const ICONS = {
+  menu: icn(`<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>`),
+  lock: icn(`<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`),
+  sun: icn(`<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>`),
+  moon: icn(`<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>`),
+  download: icn(`<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>`),
+  upload: icn(`<path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/>`),
+  flask: icn(`<path d="M9 3h6"/><path d="M10 3v6.5L4.7 18.8a1 1 0 0 0 .9 1.4h12.8a1 1 0 0 0 .9-1.4L14 9.5V3"/><path d="M7.5 15h9"/>`),
+  trash: icn(`<path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>`),
+  paperclip: icn(`<path d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.2a3.5 3.5 0 0 1 4.95 4.95L10.83 17.4a1.5 1.5 0 0 1-2.12-2.12l8.49-8.48"/>`),
+  block: icn(`<circle cx="12" cy="12" r="9"/><path d="m5.5 5.5 13 13"/>`),
+  star: icn(`<path d="M12 2.5 15 9l7 .9-5.1 4.8 1.3 6.8L12 18l-6.2 3.5 1.3-6.8L2 9.9 9 9z"/>`, 'fill="currentColor" stroke="none"'),
+  search: icn(`<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>`),
+  warning: icn(`<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4"/><path d="M12 16.5v.01"/>`),
+  arrowRight: icn(`<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>`),
+  chevronDown: icn(`<path d="m6 9 6 6 6-6"/>`),
+  chevronLeft: icn(`<path d="m15 18-6-6 6-6"/>`),
+  grip: icn(`<circle cx="9" cy="6" r="1.3"/><circle cx="9" cy="12" r="1.3"/><circle cx="9" cy="18" r="1.3"/><circle cx="15" cy="6" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="15" cy="18" r="1.3"/>`, 'fill="currentColor"'),
+};
+const FIELD_DEFS = [
+  {key:'from', label:'From', sub:'من نطاق أو إيميل معين — أي قيمة تطابق تكفي', placeholder:'nbe.com.eg أو example@bank.com'},
+  {key:'to', label:'To', sub:'الإيميل موجّه لعنوان معين', placeholder:'me@company.com'},
+  {key:'subject', label:'Subject', sub:'عنوان الرسالة يحتوي على', placeholder:'invoice, فاتورة'},
+  {key:'body', label:'Body', sub:'أي مكان في نص الرسالة يحتوي على', placeholder:'كلمة أو عبارة'},
+  {key:'exclude', label:'استثناء', sub:"لو موجودة، الإيميل يتجاهل تماماً (Doesn't have)", placeholder:'spam, newsletter', full:true}
+];
+
+const RESERVED_RAW = [
+  // Gmail system labels (Gmail API systemLabels)
+  'INBOX','SPAM','TRASH','UNREAD','STARRED','IMPORTANT','SENT','DRAFT','CHAT',
+  'CATEGORY_PERSONAL','CATEGORY_SOCIAL','CATEGORY_PROMOTIONS','CATEGORY_UPDATES','CATEGORY_FORUMS',
+  // Outlook default mailbox folders
+  'Inbox','Sent Items','Deleted Items','Drafts','Outbox','Archive','Junk Email','Junk E-mail',
+  'Notes','Conversation History','RSS Feeds','Search Folders','Clutter',
+  'Calendar','Contacts','Tasks','Journal','Sync Issues'
+];
+function normalizeName(s){ return String(s).trim().toLowerCase().replace(/_/g,' ').replace(/\s+/g,' '); }
+const RESERVED_SET = new Set(RESERVED_RAW.map(normalizeName));
+function customReservedSet(){ return new Set((state.customReservedWords||[]).map(normalizeName)); }
+function validateName(name, siblingNames){
+  const trimmed = (name||'').trim();
+  if(!trimmed) return 'اسم مطلوب';
+  if(RESERVED_SET.has(normalizeName(trimmed)) || customReservedSet().has(normalizeName(trimmed))){
+    return `لا يمكنك إنشاء تصنيف يحمل الاسم "${trimmed}" (لأنّه محفوظ للنظام فقط). يرجى تجربة اسم آخر.`;
+  }
+  if(siblingNames && siblingNames.some(n => normalizeName(n) === normalizeName(trimmed))) return `يوجد بالفعل Label بنفس الاسم "${trimmed}" في نفس المستوى`;
+  return null;
+}
+function uniqueSiblingName(base, siblingNames){
+  if(!siblingNames.some(n => normalizeName(n) === normalizeName(base))) return base;
+  let i = 2;
+  while(siblingNames.some(n => normalizeName(n) === normalizeName(`${base} (${i})`))) i++;
+  return `${base} (${i})`;
+}
+
+let state = null;
+let activeAccountId = null;
+let activeLabelId = null;
+let labelSearchTerm = '';
+let collapsedIds = new Set();
+let dragState = null;
+let stagingVariant = null;
+let stagingLabelId = null;
+let editingVariantId = null;
+function hasUnsavedStaging(){ return stagingLabelId && stagingVariant && variantHasCriteria(stagingVariant); }
+function confirmLeaveStaging(){
+  if(!hasUnsavedStaging()) return true;
+  return confirm('عندك فلتر لسه ماضفتوش (مش محفوظ) — لو غادرت من غير ما تضغط "➕ إضافة فلتر" هتفقده. تكمل؟');
+}
+
+// Storage bridge: use Claude's window.storage when available (inside claude.ai),
+// otherwise fall back to the browser's own localStorage (when running as a
+// standalone downloaded file on your PC — this is what actually persists
+// data across refreshes/closes on your own device).
+const Store = {
+  hasRemote: (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function'),
+  async get(key){
+    if(this.hasRemote){
+      try{ const r = await window.storage.get(key, false); if(r) return r; }
+      catch(e){ /* fall through to local */ }
+    }
+    try{ const raw = localStorage.getItem(key); return raw ? {key, value: raw} : null; }
+    catch(e){ return null; }
+  },
+  async set(key, value){
+    if(this.hasRemote){
+      try{ const r = await window.storage.set(key, value, false); if(r) return r; }
+      catch(e){ /* fall through to local */ }
+    }
+    try{ localStorage.setItem(key, value); return {key, value}; }
+    catch(e){ return null; }
+  }
+};
+
+function uid(p){ return (p||'a') + Math.random().toString(36).slice(2,9); }
+
+function nowISO(){ return new Date().toISOString(); }
+function fmtDate(iso){ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('ar-EG', {dateStyle:'medium', timeStyle:'short'}); }catch(e){ return '—'; } }
+
+function defaultState(){
+  return { customReservedWords: [], accounts: [
+    { id: uid('acc'), name:'Personal', locked:true, labels: [], blockedSenders: [], vipSenders: [] },
+    { id: uid('acc'), name:'Work', locked:true, labels: [], blockedSenders: [], vipSenders: [] }
+  ]};
+}
+
+function emptyVariant(){
+  return { id: uid('v'), from:[], to:[], subject:[], body:[], exclude:[], hasAttachment:false, sizeOp:'', sizeValue:'', sizeUnit:'MB', advancedQuery:'' };
+}
+function fixVariantShape(v){
+  v.id = v.id || uid('v');
+  ['from','to','subject','body','exclude'].forEach(k => { if(!v[k]) v[k] = []; });
+  if(v.hasAttachment === undefined) v.hasAttachment = false;
+  if(v.sizeOp === undefined) v.sizeOp = '';
+  if(v.sizeValue === undefined) v.sizeValue = '';
+  if(v.sizeUnit === undefined) v.sizeUnit = 'MB';
+  if(v.advancedQuery === undefined) v.advancedQuery = '';
+  return v;
+}
+function variantHasCriteria(v){
+  return ['from','to','subject','body'].some(k => v[k].length) || v.hasAttachment || (v.sizeOp && v.sizeValue) || (v.advancedQuery && v.advancedQuery.trim());
+}
+function shapeOf(v){
+  const s = [];
+  if(v.from.length) s.push('from'); if(v.to.length) s.push('to'); if(v.subject.length) s.push('subject');
+  if(v.body.length) s.push('body'); if(v.exclude.length) s.push('exclude'); if(v.hasAttachment) s.push('attachment');
+  if(v.sizeOp && v.sizeValue) s.push('size'); if(v.advancedQuery && v.advancedQuery.trim()) s.push('advQuery');
+  return s.sort().join('|');
+}
+
+function fixLabelShape(l){
+  if(l.parentId === undefined) l.parentId = null;
+  if(!l.actions) l.actions = {};
+  ['archive','markRead','star','neverSpam','trash','forward','alwaysImportant','neverImportant','stopProcessing'].forEach(k => { if(l.actions[k] === undefined) l.actions[k] = false; });
+  if(!Array.isArray(l.variants)){
+    // migrate old single-conditions-per-label model into variants[0]
+    const oc = l.conditions || {};
+    const v = fixVariantShape({
+      id: uid('v'), from: oc.from||[], to: oc.to||[], subject: oc.subject||[], body: oc.body||[], exclude: oc.exclude||[],
+      hasAttachment: !!oc.hasAttachment, sizeOp: oc.sizeOp||'', sizeValue: oc.sizeValue||'', sizeUnit: oc.sizeUnit||'MB', advancedQuery: oc.advancedQuery||''
+    });
+    l.variants = variantHasCriteria(v) ? [v] : [];
+    delete l.conditions;
+  } else {
+    l.variants.forEach(fixVariantShape);
+  }
+  if(l.forwardEmail === undefined) l.forwardEmail = '';
+  if(!l.createdAt) l.createdAt = nowISO();
+  if(!l.updatedAt) l.updatedAt = l.createdAt;
+  return l;
+}
+function fixAccountShape(acc){
+  if(!Array.isArray(acc.blockedSenders)) acc.blockedSenders = [];
+  if(!Array.isArray(acc.vipSenders)) acc.vipSenders = [];
+  return acc;
+}
+function migrateLegacy(parsed){
+  if(!Array.isArray(parsed.customReservedWords)) parsed.customReservedWords = [];
+  if(Array.isArray(parsed.accounts)){ parsed.accounts.forEach(acc => { fixAccountShape(acc); acc.labels.forEach(fixLabelShape); }); return parsed; }
+  const order = ['personal','work','extra'];
+  const names = {personal:'شخصي', work:'عمل', extra:'إضافي'};
+  const accounts = [];
+  order.forEach(k => {
+    const acc = parsed.accounts[k];
+    if(!acc) return;
+    if(k === 'extra' && (!acc.labels || !acc.labels.length)) return;
+    const labels = (acc.labels||[]).map(l => fixLabelShape(l));
+    accounts.push(fixAccountShape({ id: uid('acc'), name: acc.name || names[k], locked: k !== 'extra', labels }));
+  });
+  return { customReservedWords: parsed.customReservedWords || [], accounts: accounts.length ? accounts : defaultState().accounts };
+}
+
+async function loadState(){
+  try{ const res = await Store.get(STORAGE_KEY); state = res ? migrateLegacy(JSON.parse(res.value)) : null; }
+  catch(e){ state = null; }
+  if(!state){
+    for(const legacyKey of ['filters-state-v3','filters-state-v2','filters-state-v1']){
+      try{ const legacy = await Store.get(legacyKey); if(legacy){ state = migrateLegacy(JSON.parse(legacy.value)); break; } }
+      catch(e){ /* not found */ }
+    }
+  }
+  if(!state || !Array.isArray(state.accounts) || !state.accounts.length) state = defaultState();
+  // Locked accounts are always Personal/Work, in that order — keeps them fixed even if older data had different names
+  const locked = state.accounts.filter(a => a.locked);
+  if(locked[0]) locked[0].name = 'Personal';
+  if(locked[1]) locked[1].name = 'Work';
+  activeAccountId = state.accounts[0].id;
+}
+
+let saveTimer = null;
+function saveState(){
+  setStatus('بيحفظ...', '');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const res = await Store.set(STORAGE_KEY, JSON.stringify(state));
+    if(res) setStatus('محفوظ ✓', 'ok'); else setStatus('فشل الحفظ', 'warn');
+  }, 250);
+}
+function setStatus(msg, cls){ const el = document.getElementById('statusMsg'); el.textContent = msg; el.className = 'status' + (cls ? ' ' + cls : ''); }
+
+function currentAccount(){ return state.accounts.find(a => a.id === activeAccountId); }
+function currentLabel(){ return currentAccount().labels.find(l => l.id === activeLabelId); }
+function childrenOf(labels, parentId){ return labels.filter(l => l.parentId === parentId); }
+function getPathNames(labels, label){
+  const path = [label.name]; let cur = label;
+  while(cur.parentId){ const p = labels.find(l => l.id === cur.parentId); if(!p) break; path.unshift(p.name); cur = p; }
+  return path;
+}
+function getDescendantIds(labels, id){
+  const direct = labels.filter(l => l.parentId === id);
+  let all = direct.map(l => l.id);
+  direct.forEach(d => { all = all.concat(getDescendantIds(labels, d.id)); });
+  return all;
+}
+
+function newLabel(name, parentId){
+  const t = nowISO();
+  return {
+    id: uid('l'), name, parentId: parentId || null,
+    variants: [],
+    actions: { archive:false, markRead:false, star:false, neverSpam:false, trash:false, forward:false, alwaysImportant:false, neverImportant:false, stopProcessing:false },
+    forwardEmail:'', createdAt:t, updatedAt:t
+  };
+}
+function hasCriteria(label){
+  return label.variants.some(variantHasCriteria);
+}
+
+// ---------- Sidebar drawer (responsive) ----------
+const sidebarEl = document.getElementById('sidebar');
+const backdropEl = document.getElementById('backdrop');
+function openDrawer(){ sidebarEl.classList.add('open'); backdropEl.classList.add('show'); }
+function closeDrawer(){ sidebarEl.classList.remove('open'); backdropEl.classList.remove('show'); }
+document.getElementById('sidebarToggle').addEventListener('click', () => { sidebarEl.classList.contains('open') ? closeDrawer() : openDrawer(); });
+backdropEl.addEventListener('click', closeDrawer);
+
+// ---------- Reserved-words popover ----------
+const reservedPanel = document.getElementById('reservedWordsPanel');
+const popoverBackdrop = document.getElementById('popoverBackdrop');
+function renderReservedWordsList(){
+  renderSimpleTagList('reservedWordTags', 'reservedWordInput', 'reservedWordAddBtn', state.customReservedWords);
+}
+document.getElementById('reservedWordsBtn').addEventListener('click', () => {
+  renderReservedWordsList();
+  reservedPanel.classList.add('show');
+  popoverBackdrop.classList.add('show');
+});
+popoverBackdrop.addEventListener('click', () => { reservedPanel.classList.remove('show'); popoverBackdrop.classList.remove('show'); });
+
+// ---------- Help / Guide page ----------
+const helpPage = document.getElementById('helpPage');
+document.getElementById('helpBtn').addEventListener('click', () => helpPage.classList.add('show'));
+document.getElementById('helpBackBtn').addEventListener('click', () => helpPage.classList.remove('show'));
+document.querySelectorAll('.help-toc a').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  const target = document.querySelector(a.getAttribute('href'));
+  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+}));
+
+// ---------- Theme toggle ----------
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggle').innerHTML = theme === 'light' ? ICONS.moon : ICONS.sun;
+  try{ localStorage.setItem('filter-ledger-theme', theme); }catch(e){}
+}
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  applyTheme(current);
+});
+(function initTheme(){
+  let saved = 'dark';
+  try{ saved = localStorage.getItem('filter-ledger-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }catch(e){}
+  applyTheme(saved);
+})();
+
+// ---------- Rendering ----------
+function renderTabs(){
+  const wrap = document.getElementById('accountTabs');
+  wrap.innerHTML = '';
+  state.accounts.forEach(acc => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (acc.id === activeAccountId ? ' active' : '');
+    const input = document.createElement('input');
+    input.value = acc.name;
+    if(acc.locked){ input.readOnly = true; input.title = 'اسم ثابت لهذا الحساب'; input.style.cursor = 'pointer'; }
+    else{ input.addEventListener('click', e => e.stopPropagation()); }
+    input.addEventListener('change', () => { if(acc.locked) return; acc.name = input.value.trim() || acc.name; saveState(); });
+    tab.appendChild(input);
+    if(!acc.locked && state.accounts.length > 1){
+      const close = document.createElement('span');
+      close.className = 'tab-close'; close.textContent = '×'; close.title = 'حذف الحساب';
+      close.addEventListener('click', e => {
+        e.stopPropagation();
+        if(acc.labels.length && !confirm(`حذف حساب "${acc.name}" هيمسح ${acc.labels.length} Label. متأكد؟`)) return;
+        state.accounts = state.accounts.filter(a => a.id !== acc.id);
+        if(activeAccountId === acc.id) activeAccountId = state.accounts[0].id;
+        activeLabelId = null; saveState(); renderAll();
+      });
+      tab.appendChild(close);
+    }
+    tab.addEventListener('click', () => { if(!confirmLeaveStaging()) return; activeAccountId = acc.id; activeLabelId = null; closeDrawer(); renderAll(); });
+    wrap.appendChild(tab);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'tab-add'; addBtn.textContent = '+'; addBtn.title = 'إضافة حساب';
+  addBtn.addEventListener('click', () => {
+    const name = prompt('اسم الحساب الجديد:', 'إضافي');
+    if(!name || !name.trim()) return;
+    const acc = { id: uid('acc'), name: name.trim(), locked:false, labels: [], blockedSenders: [], vipSenders: [] };
+    state.accounts.push(acc);
+    activeAccountId = acc.id; activeLabelId = null; saveState(); renderAll();
+  });
+  wrap.appendChild(addBtn);
+}
+
+function labelMatchesSearch(labels, label, term){
+  if(!term) return true;
+  if(label.name.toLowerCase().includes(term)) return true;
+  const kids = childrenOf(labels, label.id);
+  return kids.some(k => labelMatchesSearch(labels, k, term));
+}
+
+function renderLabelList(){
+  renderHealthBar();
+  const list = document.getElementById('labelList');
+  list.innerHTML = '';
+  const labels = currentAccount().labels;
+  if(!labels.length){ list.innerHTML = '<div class="sidebar-empty">مفيش Labels لسه — ضيف واحد من فوق</div>'; return; }
+  const term = labelSearchTerm.trim().toLowerCase();
+
+  function renderNode(label, depth, siblingIndex, siblingCount){
+    if(!labelMatchesSearch(labels, label, term)) return;
+    const kids = childrenOf(labels, label.id);
+    const node = document.createElement('div');
+    node.className = 'label-node';
+    const totalConditions = label.variants.filter(variantHasCriteria).length;
+    const valid = hasCriteria(label);
+    const collapsed = collapsedIds.has(label.id);
+    const item = document.createElement('div');
+    item.className = 'label-item' + (label.id === activeLabelId ? ' active' : '') + (!valid ? ' invalid' : '');
+    item.style.marginRight = (depth * 18) + 'px';
+    item.draggable = true;
+    item.innerHTML = `<span class="left" style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;">
+        <span class="drag-handle" title="اسحب لإعادة الترتيب">${ICONS.grip}</span>
+        <span class="touch-reorder"><button data-dir="-1" title="أعلى"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="m18 15-6-6-6 6"/></svg></button><button data-dir="1" title="أسفل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"  style="width:15px;height:15px;"><path d="m6 9 6 6 6-6"/></svg></button></span>
+        ${kids.length ? `<button class="collapse-btn" title="${collapsed?'إظهار':'إخفاء'} التصنيفات الفرعية">${collapsed?ICONS.chevronLeft:ICONS.chevronDown}</button>` : '<span style="width:14px;display:inline-block;"></span>'}
+        <span class="prio-badge">#${siblingIndex+1}</span>
+        <span class="name">${depth ? '<span class="tw">└</span>' : ''}${escapeHtml(label.name)}</span>
+      </span>
+      <span class="right"><button class="add-child-btn" title="إضافة تصنيف فرعي">+</button><span class="count">${valid ? totalConditions : ICONS.warning}</span></span>`;
+    item.title = valid ? '' : 'محتاج شرط واحد على الأقل عشان يتصدّر';
+    item.addEventListener('click', e => {
+      if(e.target.closest('.add-child-btn') || e.target.closest('.collapse-btn') || e.target.closest('.touch-reorder')) return;
+      if(label.id === activeLabelId) return;
+      if(!confirmLeaveStaging()) return;
+      activeLabelId = label.id; renderContent(); renderLabelList(); closeDrawer();
+    });
+    item.querySelector('.add-child-btn').addEventListener('click', e => { e.stopPropagation(); addChildLabel(label.id); });
+    const touchUp = item.querySelector('.touch-reorder button[data-dir="-1"]'), touchDown = item.querySelector('.touch-reorder button[data-dir="1"]');
+    touchUp.disabled = siblingIndex === 0; touchDown.disabled = siblingIndex === siblingCount - 1;
+    touchUp.addEventListener('click', e => { e.stopPropagation(); moveAdjacent(label, -1); });
+    touchDown.addEventListener('click', e => { e.stopPropagation(); moveAdjacent(label, 1); });
+    const collapseBtn = item.querySelector('.collapse-btn');
+    if(collapseBtn) collapseBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      collapsedIds.has(label.id) ? collapsedIds.delete(label.id) : collapsedIds.add(label.id);
+      renderLabelList();
+    });
+    item.addEventListener('dragstart', e => { dragState = { id: label.id, parentId: label.parentId }; item.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    item.addEventListener('dragend', () => { item.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); dragState = null; });
+    item.addEventListener('dragover', e => {
+      if(!dragState || dragState.parentId !== label.parentId || dragState.id === label.id) return;
+      e.preventDefault(); item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault(); item.classList.remove('drag-over');
+      if(!dragState || dragState.parentId !== label.parentId || dragState.id === label.id) return;
+      reorderLabel(dragState.id, label.id);
+    });
+    node.appendChild(item);
+    list.appendChild(node);
+    if(!collapsed) kids.forEach((child, i) => renderNode(child, depth + 1, i, kids.length));
+  }
+  const topLevel = childrenOf(labels, null);
+  topLevel.forEach((l, i) => renderNode(l, 0, i, topLevel.length));
+  if(term && !list.children.length) list.innerHTML = '<div class="sidebar-empty">مفيش نتائج مطابقة للبحث</div>';
+}
+
+function addChildLabel(parentId){
+  if(!confirmLeaveStaging()) return;
+  const labels = currentAccount().labels;
+  const parent = labels.find(l => l.id === parentId);
+  const siblingNames = childrenOf(labels, parentId).map(l => l.name);
+  const name = uniqueSiblingName('تصنيف فرعي جديد', siblingNames);
+  const child = newLabel(name, parentId);
+  if(parent){
+    child.actions = JSON.parse(JSON.stringify(parent.actions));
+    child.forwardEmail = parent.forwardEmail;
+  }
+  labels.push(child);
+  activeLabelId = child.id;
+  collapsedIds.delete(parentId);
+  saveState(); renderAll();
+  const input = document.getElementById('labelNameInput');
+  if(input){ input.focus(); input.select(); }
+}
+
+function duplicateLabel(label){
+  if(!confirmLeaveStaging()) return;
+  const labels = currentAccount().labels;
+  const siblingNames = childrenOf(labels, label.parentId).map(l => l.name);
+  const name = uniqueSiblingName(label.name + ' (نسخة)', siblingNames);
+  const copy = newLabel(name, label.parentId);
+  copy.variants = JSON.parse(JSON.stringify(label.variants)).map(v => ({...v, id: uid('v')}));
+  copy.actions = JSON.parse(JSON.stringify(label.actions));
+  copy.forwardEmail = label.forwardEmail;
+  const idx = labels.indexOf(label);
+  labels.splice(idx + 1, 0, copy);
+  activeLabelId = copy.id;
+  saveState(); renderAll();
+}
+
+function moveAdjacent(label, dir){
+  const labels = currentAccount().labels;
+  const siblings = childrenOf(labels, label.parentId);
+  const idx = siblings.indexOf(label);
+  const swapIdx = idx + dir;
+  if(swapIdx < 0 || swapIdx >= siblings.length) return;
+  const other = siblings[swapIdx];
+  const i1 = labels.indexOf(label), i2 = labels.indexOf(other);
+  labels[i1] = other; labels[i2] = label;
+  saveState(); renderAll();
+}
+
+function reorderLabel(draggedId, targetId){
+  const labels = currentAccount().labels;
+  if(draggedId === targetId) return;
+  const dragged = labels.find(l => l.id === draggedId);
+  const target = labels.find(l => l.id === targetId);
+  if(!dragged || !target || dragged.parentId !== target.parentId) return;
+  const fromIdx = labels.indexOf(dragged);
+  labels.splice(fromIdx, 1);
+  const toIdx = labels.indexOf(target);
+  labels.splice(toIdx, 0, dragged);
+  saveState(); renderAll();
+}
+
+const SHAPE_DISPLAY = { from:'From', to:'To', subject:'Subject', body:'Body', exclude:'Exclude', attachment:'Attachment', size:'Size', advQuery:'Advanced Query' };
+function variantShapeLabel(v){
+  const active = [];
+  if(v.from.length) active.push('from');
+  if(v.to.length) active.push('to');
+  if(v.subject.length) active.push('subject');
+  if(v.body.length) active.push('body');
+  if(v.hasAttachment) active.push('attachment');
+  if(v.sizeOp && v.sizeValue) active.push('size');
+  if(v.advancedQuery && v.advancedQuery.trim()) active.push('advQuery');
+  if(v.exclude.length) active.push('exclude');
+  return active.length ? active.map(k => SHAPE_DISPLAY[k]).join(' & ') : 'Empty';
+}
+
+function describeVariantConditions(v){
+  const parts = [];
+  if(v.from.length) parts.push(`من (${v.from.join(' أو ')})`);
+  if(v.to.length) parts.push(`موجّه إلى (${v.to.join(' أو ')})`);
+  if(v.subject.length) parts.push(`والعنوان يحتوي على (${v.subject.join(' أو ')})`);
+  if(v.body.length) parts.push(`ونص الرسالة يحتوي على (${v.body.join(' أو ')})`);
+  if(v.hasAttachment) parts.push('وفيه مرفق');
+  if(v.sizeOp && v.sizeValue) parts.push(`وحجمه ${v.sizeOp === 'larger' ? 'أكبر من' : 'أصغر من'} ${v.sizeValue} ${v.sizeUnit}`);
+  if(v.advancedQuery && v.advancedQuery.trim()) parts.push(`ومطابق لعامل البحث المتقدم "${v.advancedQuery.trim()}"`);
+  if(v.exclude.length) parts.push(`بشرط ما يكونش فيه (${v.exclude.join(' أو ')})`);
+  return parts.join('، ');
+}
+
+function buildSummary(label, fullPath){
+  const validVariants = label.variants.filter(variantHasCriteria);
+  if(!validVariants.length) return null;
+
+  const acts = [];
+  acts.push(`يتصنّف تحت "${fullPath}"`);
+  if(label.actions.archive) acts.push('يتخطى Inbox');
+  if(label.actions.markRead) acts.push('يتعلّم كمقروء');
+  if(label.actions.star) acts.push('يتنجّم');
+  if(label.actions.neverSpam) acts.push('ميترسلش سبام أبداً');
+  if(label.actions.alwaysImportant) acts.push('يتعلّم كمهم دايماً');
+  if(label.actions.neverImportant) acts.push('ميتعلّمش كمهم أبداً');
+  if(label.actions.trash) acts.push('يتحذف مباشرة');
+  if(label.actions.stopProcessing) acts.push('وتتوقف أي قواعد تانية بعده (Outlook)');
+  if(label.actions.forward && label.forwardEmail) acts.push(`يتحوّل لـ ${label.forwardEmail}`);
+  const actsLine = acts.join('، ') + '.';
+
+  if(validVariants.length === 1){
+    return `أي إيميل ${describeVariantConditions(validVariants[0])} — ${actsLine}`;
+  }
+  const lines = validVariants.map(v => `<b>Filter (${variantShapeLabel(v)}):</b> أي إيميل ${describeVariantConditions(v)}`);
+  return lines.join('<br>') + `<br><br>في كل الحالات دي: ${actsLine}`;
+}
+
+function renderOverview(content){
+  const acc = currentAccount();
+  const labels = acc.labels;
+  content.innerHTML = '';
+
+  if(!labels.length){
+    content.innerHTML = '<div class="empty"><b>ابدأ بإضافة Label</b>حدد شروط الفرز والإجراءات، وبعدين صدّر الحساب كامل من تحت</div>';
+    return;
+  }
+
+  const wrap = document.createElement('div'); wrap.className = 'overview';
+  const totalFilters = labels.reduce((n,l) => n + l.variants.filter(variantHasCriteria).length, 0);
+  wrap.innerHTML = `<div class="overview-header"><h2>${escapeHtml(acc.name)}</h2><span>${labels.length} Label · ${totalFilters} فلتر</span></div>
+    <div class="overview-list" id="overviewList"></div>`;
+  content.appendChild(wrap);
+  const list = document.getElementById('overviewList');
+
+  function renderNode(label, depth){
+    const validVariants = label.variants.filter(variantHasCriteria);
+    const card = document.createElement('div');
+    card.className = 'overview-card' + (depth ? ' child' : '');
+    card.style.marginRight = (depth * 22) + 'px';
+    const filtersHtml = validVariants.length
+      ? validVariants.map(v => `<div class="ov-filter"><b>Filter (${escapeHtml(variantShapeLabel(v))}):</b> ${escapeHtml(describeVariantConditions(v))}</div>`).join('')
+      : '<div class="ov-filter empty">لا يوجد فلاتر مضافة لسه</div>';
+    card.innerHTML = `
+      <div class="overview-card-head">
+        <span class="ov-name">${depth ? '<span class="tw">└</span>' : ''}${escapeHtml(label.name)}</span>
+        <span class="ov-badge ${depth ? 'sub' : 'main'}">${depth ? 'تصنيف فرعي' : 'تصنيف رئيسي'}</span>
+      </div>
+      <div class="overview-filters">${filtersHtml}</div>`;
+    card.addEventListener('click', () => { if(!confirmLeaveStaging()) return; activeLabelId = label.id; renderContent(); renderLabelList(); });
+    list.appendChild(card);
+    childrenOf(labels, label.id).forEach(child => renderNode(child, depth + 1));
+  }
+  childrenOf(labels, null).forEach(l => renderNode(l, 0));
+}
+
+function renderContent(){
+  const content = document.getElementById('content');
+  const label = currentLabel();
+  if(!label){ renderOverview(content); return; }
+  content.innerHTML = '';
+  const labels = currentAccount().labels;
+  const path = getPathNames(labels, label);
+  const fullPath = path.join('/');
+
+  if(path.length > 1){
+    const bc = document.createElement('div'); bc.className = 'breadcrumb';
+    bc.innerHTML = path.slice(0,-1).map(p=>escapeHtml(p)).join(' / ') + ' / <b>' + escapeHtml(path[path.length-1]) + '</b>';
+    content.appendChild(bc);
+  }
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'name-edit';
+  nameRow.innerHTML = `<input type="text" id="labelNameInput" value="${escapeAttr(label.name)}">
+    <div class="name-edit-actions">
+      <button class="add-sub-btn" id="dupBtn">⧉ نسخ</button>
+      <button class="add-sub-btn" id="addSubBtn">+ تصنيف فرعي</button>
+      <button class="del-label-btn" id="delLabelBtn">حذف</button>
+    </div>`;
+  content.appendChild(nameRow);
+
+  const nameErr = document.createElement('div'); nameErr.className = 'name-error'; nameErr.id = 'nameError';
+  content.appendChild(nameErr);
+
+  const metaLine = document.createElement('div'); metaLine.className = 'label-hint';
+  metaLine.style.opacity = '.75';
+  metaLine.textContent = `أُنشئ: ${fmtDate(label.createdAt)} · آخر تعديل: ${fmtDate(label.updatedAt)}`;
+  content.appendChild(metaLine);
+
+  const nameInput = document.getElementById('labelNameInput');
+  nameInput.addEventListener('change', () => {
+    const siblingNames = childrenOf(labels, label.parentId).filter(l => l.id !== label.id).map(l => l.name);
+    const err = validateName(nameInput.value, siblingNames);
+    if(err){ nameInput.value = label.name; nameInput.classList.add('invalid-input'); nameErr.textContent = err;
+      setTimeout(()=>{ nameInput.classList.remove('invalid-input'); nameErr.textContent=''; }, 3500); return; }
+    label.name = nameInput.value.trim();
+    label.updatedAt = nowISO();
+    saveState(); renderLabelList(); renderContent();
+  });
+  document.getElementById('dupBtn').addEventListener('click', () => duplicateLabel(label));
+  document.getElementById('addSubBtn').addEventListener('click', () => addChildLabel(label.id));
+  document.getElementById('delLabelBtn').addEventListener('click', () => {
+    const descendants = getDescendantIds(labels, label.id);
+    if(descendants.length && !confirm(`الـ Label ده فيه ${descendants.length} تصنيف فرعي، هيتمسحوا كمان. متأكد؟`)) return;
+    const toRemove = new Set([label.id, ...descendants]);
+    currentAccount().labels = currentAccount().labels.filter(l => !toRemove.has(l.id));
+    activeLabelId = null; saveState(); renderAll();
+  });
+
+  const hint = document.createElement('div'); hint.className = 'label-hint';
+  hint.textContent = hasCriteria(label) ? '' : 'محتاج شرط واحد على الأقل عشان يتحول لفلتر شغّال عند التصدير';
+  content.appendChild(hint);
+
+  const siblings = childrenOf(labels, label.parentId);
+  const prioIdx = siblings.indexOf(label);
+  const prioHint = document.createElement('div'); prioHint.className = 'label-hint';
+  prioHint.textContent = `الأولوية: #${prioIdx+1} من ${siblings.length} — اسحب الـ Label من القائمة الجانبية بمقبض السحب لإعادة الترتيب. الترتيب ده هو ترتيب التنفيذ الفعلي في Outlook، ومرجعي في Gmail.`;
+  content.appendChild(prioHint);
+
+  const summaryEl = document.createElement('div'); summaryEl.id = 'summaryBox';
+  content.appendChild(summaryEl);
+  function refreshSummary(){
+    const s = buildSummary(label, fullPath);
+    summaryEl.className = 'summary-box' + (s ? '' : ' empty-summary');
+    summaryEl.innerHTML = s ? s : 'أضف فلتر واحد على الأقل عشان تشوف هنا وصف مباشر لسلوك التصنيف قبل ما تصدّره.';
+  }
+  refreshSummary();
+
+  ensureStaging(label.id);
+
+  const stagingTitle = document.createElement('div'); stagingTitle.className = 'section-title';
+  stagingTitle.textContent = editingVariantId ? 'تعديل فلتر موجود' : 'بيانات فلتر جديد — املأ الحقول اللي محتاجها بس';
+  content.appendChild(stagingTitle);
+
+  const grid = document.createElement('div'); grid.className = 'conditions-grid';
+  FIELD_DEFS.forEach(f => {
+    const block = document.createElement('div'); block.className = 'field-block' + (f.full ? ' full' : '');
+    block.innerHTML = `<label class="title">${f.label}</label><span class="sub">${f.sub}</span>
+      <div class="field-input-row">
+        <input type="text" id="input-${f.key}" placeholder="${escapeAttr(f.placeholder)}">
+        <button class="add-tag-btn" id="btn-${f.key}">+ إضافة</button>
+      </div>
+      <div class="tags-row" id="tags-${f.key}"></div>`;
+    grid.appendChild(block);
+  });
+
+  const attBlock = document.createElement('div'); attBlock.className = 'field-block';
+  attBlock.innerHTML = `<label class="title">المرفقات</label><span class="sub">شرط وجود ملف مرفق بالإيميل</span>
+    <div class="inline-check"><input type="checkbox" id="hasAttachment"><label for="hasAttachment">الإيميل فيه مرفق (Has attachment)</label></div>`;
+  grid.appendChild(attBlock);
+
+  const sizeBlock = document.createElement('div'); sizeBlock.className = 'field-block';
+  sizeBlock.innerHTML = `<label class="title">حجم الرسالة</label><span class="sub">فلترة حسب حجم الإيميل كامل</span>
+    <div class="size-row">
+      <select id="sizeOp"><option value="">بدون شرط حجم</option><option value="larger">أكبر من</option><option value="smaller">أصغر من</option></select>
+      <input type="number" id="sizeValue" min="0" placeholder="الرقم">
+      <select id="sizeUnit"><option value="KB">KB</option><option value="MB">MB</option></select>
+    </div>`;
+  grid.appendChild(sizeBlock);
+
+  const advBlock = document.createElement('div'); advBlock.className = 'field-block full';
+  advBlock.innerHTML = `<label class="title">Advanced Query <span style="color:var(--muted-2);font-weight:400;">(اختياري — Gmail فقط)</span></label>
+    <span class="sub">أي عامل بحث متقدم من Gmail، زي filename:pdf أو list:newsletter@x.com أو is:starred — بيتضاف كشرط إضافي (AND) فوق باقي شروط الفلتر ده</span>
+    <input type="text" id="advancedQuery" placeholder="مثال: filename:pdf">`;
+  grid.appendChild(advBlock);
+
+  content.appendChild(grid);
+  FIELD_DEFS.forEach(f => renderTagInput(f.key, stagingVariant, f.placeholder, () => refreshStagingPreview(label)));
+
+  const advEl = document.getElementById('advancedQuery');
+  advEl.value = stagingVariant.advancedQuery || '';
+  advEl.addEventListener('input', () => { stagingVariant.advancedQuery = advEl.value; refreshStagingPreview(label); });
+
+  const hasAttEl = document.getElementById('hasAttachment');
+  hasAttEl.checked = stagingVariant.hasAttachment;
+  hasAttEl.addEventListener('change', () => { stagingVariant.hasAttachment = hasAttEl.checked; refreshStagingPreview(label); });
+
+  const sizeOpEl = document.getElementById('sizeOp'), sizeValEl = document.getElementById('sizeValue'), sizeUnitEl = document.getElementById('sizeUnit');
+  sizeOpEl.value = stagingVariant.sizeOp; sizeValEl.value = stagingVariant.sizeValue; sizeUnitEl.value = stagingVariant.sizeUnit;
+  [sizeOpEl, sizeValEl, sizeUnitEl].forEach(el => el.addEventListener('input', () => {
+    stagingVariant.sizeOp = sizeOpEl.value; stagingVariant.sizeValue = sizeValEl.value; stagingVariant.sizeUnit = sizeUnitEl.value;
+    refreshStagingPreview(label);
+  }));
+
+  const stagingPreview = document.createElement('div'); stagingPreview.id = 'stagingPreview'; stagingPreview.className = 'label-hint';
+  content.appendChild(stagingPreview);
+
+  const stagingBtnRow = document.createElement('div'); stagingBtnRow.style.cssText = 'display:flex;gap:8px;margin:12px 0 6px;';
+  stagingBtnRow.innerHTML = editingVariantId
+    ? `<button class="btn btn-primary" id="commitBtn">💾 حفظ التعديل</button><button class="btn btn-secondary" id="cancelEditBtn">إلغاء</button>`
+    : `<button class="btn btn-primary" id="commitBtn">➕ إضافة فلتر</button>`;
+  content.appendChild(stagingBtnRow);
+  document.getElementById('commitBtn').addEventListener('click', () => commitVariant(label));
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  if(cancelBtn) cancelBtn.addEventListener('click', () => { stagingVariant = emptyVariant(); editingVariantId = null; renderContent(); });
+
+  refreshStagingPreview(label);
+
+  const variantsTitle = document.createElement('div'); variantsTitle.className = 'section-title';
+  variantsTitle.textContent = `الفلاتر الحالية لهذا التصنيف (${label.variants.filter(variantHasCriteria).length})`;
+  content.appendChild(variantsTitle);
+
+  const variantsList = document.createElement('div'); variantsList.id = 'variantsList';
+  content.appendChild(variantsList);
+  renderVariantList(label, variantsList);
+
+  const actionsTitle = document.createElement('div'); actionsTitle.className = 'section-title'; actionsTitle.textContent = 'الإجراءات عند التطابق';
+  content.appendChild(actionsTitle);
+
+  const agrid = document.createElement('div'); agrid.className = 'actions-grid';
+  agrid.innerHTML = `
+    ${checkRow('archive','Skip Inbox — لا يظهر في Inbox')}
+    ${checkRow('markRead','Mark as read')}
+    ${checkRow('star','Star it')}
+    ${checkRow('neverSpam','Never send to Spam')}
+    ${checkRow('alwaysImportant','Always mark as important')}
+    ${checkRow('neverImportant','Never mark as important')}
+    ${checkRow('trash','Delete it')}
+    ${checkRow('stopProcessing','إيقاف باقي القواعد (Stop processing — Outlook فقط)')}
+    ${checkRow('forward','Forward to (Gmail فقط)')}
+    <div class="forward-input" id="forwardWrap"><input type="email" id="forwardEmail" placeholder="forward@example.com" value="${escapeAttr(label.forwardEmail||'')}"></div>
+  `;
+  content.appendChild(agrid);
+  document.getElementById('forwardWrap').classList.toggle('show', label.actions.forward);
+  document.getElementById('forwardEmail').addEventListener('change', e => { label.forwardEmail = e.target.value.trim(); label.updatedAt = nowISO(); saveState(); refreshSummary(); });
+
+  Object.keys(label.actions).forEach(k => {
+    const cb = document.getElementById('act-'+k); if(!cb) return;
+    cb.checked = label.actions[k];
+    cb.addEventListener('change', () => {
+      label.actions[k] = cb.checked;
+      if(k === 'alwaysImportant' && cb.checked){ label.actions.neverImportant = false; document.getElementById('act-neverImportant').checked = false; }
+      if(k === 'neverImportant' && cb.checked){ label.actions.alwaysImportant = false; document.getElementById('act-alwaysImportant').checked = false; }
+      document.getElementById('forwardWrap').classList.toggle('show', label.actions.forward);
+      label.updatedAt = nowISO(); saveState(); refreshSummary();
+    });
+  });
+}
+
+function checkRow(key, text){ return `<div class="check-row"><input type="checkbox" id="act-${key}"><label for="act-${key}">${text}</label></div>`; }
+
+function renderTagInput(fieldKey, obj, placeholder, onChange){
+  const wrap = document.getElementById('tags-'+fieldKey);
+  const input = document.getElementById('input-'+fieldKey);
+  const btn = document.getElementById('btn-'+fieldKey);
+  wrap.innerHTML = '';
+  obj[fieldKey].forEach((val, idx) => {
+    const tag = document.createElement('span'); tag.className = 'tag';
+    tag.innerHTML = `<span>${escapeHtml(val)}</span><button data-idx="${idx}">×</button>`;
+    tag.querySelector('button').addEventListener('click', () => {
+      obj[fieldKey].splice(idx,1); renderTagInput(fieldKey, obj, placeholder, onChange); onChange && onChange();
+    });
+    wrap.appendChild(tag);
+  });
+  function commit(){
+    const val = input.value.trim(); if(!val) return;
+    obj[fieldKey].push(val); input.value = '';
+    renderTagInput(fieldKey, obj, placeholder, onChange); onChange && onChange(); input.focus();
+  }
+  btn.addEventListener('click', commit);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } });
+}
+
+// ---------- Staging box: builds one filter-variant at a time for the open Label ----------
+function ensureStaging(labelId){
+  if(stagingLabelId !== labelId){ stagingVariant = emptyVariant(); stagingLabelId = labelId; editingVariantId = null; }
+}
+
+function refreshStagingPreview(label){
+  const el = document.getElementById('stagingPreview');
+  if(!el) return;
+  if(!variantHasCriteria(stagingVariant)){
+    el.textContent = 'املأ شرط واحد على الأقل من الحقول فوق عشان تقدر تضيفه كفلتر.';
+    return;
+  }
+  const desc = describeVariantConditions(stagingVariant);
+  const shape = shapeOf(stagingVariant);
+  if(editingVariantId){
+    el.textContent = `هيتحدّث الفلتر ده إلى: ${desc}`;
+  }else{
+    const match = label.variants.find(v => shapeOf(v) === shape);
+    el.textContent = match ? `هيندمج مع فلتر موجود بنفس الشكل: ${desc}` : `هيتضاف كفلتر جديد منفصل: ${desc}`;
+  }
+}
+
+function commitVariant(label){
+  const errEl = document.getElementById('stagingPreview');
+  if(!variantHasCriteria(stagingVariant)){ if(errEl) errEl.textContent = 'محتاج شرط واحد على الأقل قبل الإضافة.'; return; }
+  const shape = shapeOf(stagingVariant);
+  if(editingVariantId){
+    const idx = label.variants.findIndex(v => v.id === editingVariantId);
+    if(idx > -1) label.variants[idx] = { ...JSON.parse(JSON.stringify(stagingVariant)), id: editingVariantId };
+  } else {
+    const match = label.variants.find(v => shapeOf(v) === shape);
+    if(match){
+      ['from','to','subject','body','exclude'].forEach(k => {
+        stagingVariant[k].forEach(val => { if(!match[k].some(x => normalizeName(x) === normalizeName(val))) match[k].push(val); });
+      });
+      if(stagingVariant.hasAttachment) match.hasAttachment = true;
+      if(stagingVariant.sizeOp && stagingVariant.sizeValue){ match.sizeOp = stagingVariant.sizeOp; match.sizeValue = stagingVariant.sizeValue; match.sizeUnit = stagingVariant.sizeUnit; }
+      if(stagingVariant.advancedQuery && stagingVariant.advancedQuery.trim()) match.advancedQuery = stagingVariant.advancedQuery.trim();
+    } else {
+      label.variants.push(JSON.parse(JSON.stringify(stagingVariant)));
+    }
+  }
+  label.updatedAt = nowISO();
+  stagingVariant = emptyVariant();
+  editingVariantId = null;
+  saveState(); renderLabelList(); renderContent();
+}
+
+function editVariant(label, variantId){
+  const v = label.variants.find(x => x.id === variantId);
+  if(!v) return;
+  stagingVariant = JSON.parse(JSON.stringify(v));
+  editingVariantId = variantId;
+  renderContent();
+}
+
+function deleteVariant(label, variantId){
+  label.variants = label.variants.filter(v => v.id !== variantId);
+  if(editingVariantId === variantId){ stagingVariant = emptyVariant(); editingVariantId = null; }
+  label.updatedAt = nowISO();
+  saveState(); renderLabelList(); renderContent();
+}
+
+function renderVariantList(label, container){
+  const valid = label.variants.filter(variantHasCriteria);
+  if(!valid.length){ container.innerHTML = '<div class="test-empty">مفيش فلاتر مضافة لسه لهذا التصنيف.</div>'; return; }
+  container.innerHTML = valid.map((v,i) => `
+    <div class="variant-card">
+      <div class="variant-card-head">
+        <span class="variant-num">Filter (${variantShapeLabel(v)})</span>
+        <div class="variant-card-actions">
+          <button class="icon-btn variant-edit" data-id="${v.id}" title="تعديل">${icnSmall('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>')}</button>
+          <button class="icon-btn variant-del" data-id="${v.id}" title="حذف">${ICONS.trash}</button>
+        </div>
+      </div>
+      <div class="variant-card-body">${escapeHtml(describeVariantConditions(v))}</div>
+    </div>`).join('');
+  container.querySelectorAll('.variant-edit').forEach(btn => btn.addEventListener('click', () => editVariant(label, btn.dataset.id)));
+  container.querySelectorAll('.variant-del').forEach(btn => btn.addEventListener('click', () => {
+    if(confirm('حذف الفلتر ده؟')) deleteVariant(label, btn.dataset.id);
+  }));
+}
+function icnSmall(paths){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;">${paths}</svg>`; }
+
+function renderAll(){ renderTabs(); renderLabelList(); renderContent(); }
+
+function renderHealthBar(){
+  const bar = document.getElementById('healthBar');
+  const labels = currentAccount().labels;
+  const total = labels.length;
+  const valid = labels.filter(hasCriteria).length;
+  const invalid = total - valid;
+  const conflicts = computeConflicts(labels).length;
+  if(!total){ bar.innerHTML = ''; return; }
+  bar.innerHTML = `<span><b>${total}</b> Label</span>` +
+    `<span><b>${valid}</b> صالح</span>` +
+    (invalid ? `<span class="warn-stat"><b>${invalid}</b> ناقص</span>` : '') +
+    (conflicts ? `<span class="conflict-stat"><b>${conflicts}</b> تعارض</span>` : '');
+  bar.onclick = () => document.getElementById('testConflictsBtn').click();
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+document.getElementById('searchLabels').addEventListener('input', e => { labelSearchTerm = e.target.value; renderLabelList(); });
+
+// ---------- Add label / reset ----------
+document.getElementById('addLabelBtn').addEventListener('click', addLabelFromInput);
+document.getElementById('newLabelInput').addEventListener('keydown', e => { if(e.key === 'Enter') addLabelFromInput(); });
+function addLabelFromInput(){
+  if(!confirmLeaveStaging()) return;
+  const input = document.getElementById('newLabelInput');
+  const errEl = document.getElementById('newLabelError');
+  const name = input.value.trim();
+  const siblingNames = childrenOf(currentAccount().labels, null).map(l => l.name);
+  const err = validateName(name, siblingNames);
+  if(err){ errEl.textContent = err; errEl.classList.add('show'); input.classList.add('invalid-input'); return; }
+  errEl.classList.remove('show'); input.classList.remove('invalid-input');
+  const label = newLabel(name, null);
+  currentAccount().labels.push(label);
+  activeLabelId = label.id; input.value = '';
+  saveState(); renderAll();
+}
+document.getElementById('newLabelInput').addEventListener('input', () => {
+  document.getElementById('newLabelError').classList.remove('show');
+  document.getElementById('newLabelInput').classList.remove('invalid-input');
+});
+
+document.getElementById('resetAccount').addEventListener('click', () => {
+  if(!currentAccount().labels.length) return;
+  if(!confirm('هيتم مسح كل الـ Labels في الحساب ده. متأكد؟')) return;
+  currentAccount().labels = []; activeLabelId = null; saveState(); renderAll();
+});
+
+// ---------- Export: Gmail XML ----------
+function xmlEscape(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+function isoNoMillis(d){ return d.toISOString().replace(/\.\d{3}Z$/, 'Z'); }
+
+function buildGmailXML(validLabels, labels, acc){
+  const now = isoNoMillis(new Date());
+  let entries = '';
+  let entryIdx = 0;
+  validLabels.forEach((label) => {
+    const fullPath = getPathNames(labels, label).join('/');
+    label.variants.filter(variantHasCriteria).forEach(v => {
+      const props = [];
+      if(v.from.length) props.push(`<apps:property name='from' value='${xmlEscape(v.from.map(x=>`(${x})`).join(' OR '))}'/>`);
+      if(v.to.length) props.push(`<apps:property name='to' value='${xmlEscape(v.to.map(x=>`(${x})`).join(' OR '))}'/>`);
+      if(v.subject.length) props.push(`<apps:property name='subject' value='${xmlEscape(v.subject.map(x=>`(${x})`).join(' OR '))}'/>`);
+      if(v.body.length || (v.advancedQuery && v.advancedQuery.trim())){
+        const bodyPart = v.body.length ? v.body.map(x=>`(${x})`).join(' OR ') : '';
+        const advPart = (v.advancedQuery || '').trim();
+        const combined = [bodyPart, advPart].filter(Boolean).join(' ');
+        props.push(`<apps:property name='hasTheWord' value='${xmlEscape(combined)}'/>`);
+      }
+      if(v.exclude.length) props.push(`<apps:property name='doesNotHaveTheWord' value='${xmlEscape(v.exclude.map(x=>`(${x})`).join(' OR '))}'/>`);
+      if(v.hasAttachment) props.push(`<apps:property name='hasAttachment' value='true'/>`);
+      if(v.sizeOp && v.sizeValue){
+        props.push(`<apps:property name='size' value='${xmlEscape(v.sizeValue)}'/>`);
+        props.push(`<apps:property name='sizeOperator' value='${v.sizeOp === 'larger' ? 's_sl' : 's_ss'}'/>`);
+        props.push(`<apps:property name='sizeUnit' value='${v.sizeUnit === 'MB' ? 's_smb' : 's_skb'}'/>`);
+      }
+      props.push(`<apps:property name='label' value='${xmlEscape(fullPath)}'/>`);
+      if(label.actions.archive) props.push(`<apps:property name='shouldArchive' value='true'/>`);
+      if(label.actions.markRead) props.push(`<apps:property name='shouldMarkAsRead' value='true'/>`);
+      if(label.actions.star) props.push(`<apps:property name='shouldStar' value='true'/>`);
+      if(label.actions.neverSpam) props.push(`<apps:property name='shouldNeverSpam' value='true'/>`);
+      if(label.actions.alwaysImportant) props.push(`<apps:property name='shouldAlwaysMarkAsImportant' value='true'/>`);
+      if(label.actions.neverImportant) props.push(`<apps:property name='shouldNeverMarkAsImportant' value='true'/>`);
+      if(label.actions.trash) props.push(`<apps:property name='shouldTrash' value='true'/>`);
+      if(label.actions.forward && label.forwardEmail) props.push(`<apps:property name='forwardTo' value='${xmlEscape(label.forwardEmail)}'/>`);
+
+      entries += `<entry>
+<category term='filter'></category>
+<title>Mail Filter</title>
+<id>tag:mail.google.com,2008:filter:${Date.now()}${entryIdx++}</id>
+<updated>${now}</updated>
+<content></content>
+${props.join('\n')}
+</entry>\n`;
+    });
+  });
+
+  return `<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:apps='http://schemas.google.com/apps/2006'>
+<title>Mail Filters</title>
+<id>tag:mail.google.com,2008:filters:${Date.now()}</id>
+<updated>${now}</updated>
+<author><name>${xmlEscape(acc.name)}</name><email>user@gmail.com</email></author>
+${entries}</feed>`;
+}
+
+document.getElementById('exportGmail').addEventListener('click', () => {
+  const acc = currentAccount();
+  const validLabels = acc.labels.filter(hasCriteria);
+  const skipped = acc.labels.length - validLabels.length;
+  if(!validLabels.length){ alert('مفيش Label بشروط كافية للتصدير. كل Label لازم شرط واحد على الأقل.'); return; }
+  const xml = buildGmailXML(validLabels, acc.labels, acc);
+  downloadFile(xml, `gmail-filters-${slug(acc.name)}.xml`, 'application/xml');
+  setStatus(skipped ? `تم التصدير — تخطي ${skipped} Label بدون شروط` : 'تم تصدير Gmail XML ✓', skipped ? 'warn' : 'ok');
+});
+
+// ---------- Import: Gmail XML ----------
+document.getElementById('importGmail').addEventListener('click', () => document.getElementById('importGmailFile').click());
+document.getElementById('importGmailFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const text = await file.text();
+    const count = importGmailXML(text);
+    setStatus(`تم استيراد ${count} فلتر ✓`, 'ok');
+    renderAll();
+  }catch(err){
+    alert('تعذّر قراءة ملف XML — تأكد إنه ملف تصدير Gmail الأصلي.');
+  }
+  e.target.value = '';
+});
+
+function parseOrList(raw){
+  if(!raw) return [];
+  return raw.split(/\s+OR\s+/).map(s => s.trim().replace(/^\(/,'').replace(/\)$/,'').trim()).filter(Boolean);
+}
+function findOrCreatePath(labels, segments){
+  let parentId = null, node = null;
+  segments.forEach(seg => {
+    node = labels.find(l => l.parentId === parentId && l.name === seg);
+    if(!node){ node = newLabel(seg, parentId); labels.push(node); }
+    parentId = node.id;
+  });
+  return node;
+}
+function importGmailXML(text){
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if(doc.querySelector('parsererror')) throw new Error('parse error');
+  const entries = Array.from(doc.getElementsByTagNameNS('*','entry'));
+  const acc = currentAccount();
+  let count = 0;
+  entries.forEach(entry => {
+    const props = {};
+    Array.from(entry.getElementsByTagNameNS('*','property')).forEach(p => { props[p.getAttribute('name')] = p.getAttribute('value'); });
+    if(!props.label) return; // skip filters with no label assignment — nothing for this tool to attach them to
+    const segments = props.label.split('/').map(s => s.trim()).filter(Boolean);
+    if(!segments.length) return;
+    const label = findOrCreatePath(acc.labels, segments);
+    const v = emptyVariant();
+    v.from = parseOrList(props.from);
+    v.to = parseOrList(props.to);
+    v.subject = parseOrList(props.subject);
+    v.body = parseOrList(props.hasTheWord);
+    v.exclude = parseOrList(props.doesNotHaveTheWord);
+    v.hasAttachment = props.hasAttachment === 'true';
+    if(props.sizeOperator){
+      v.sizeOp = props.sizeOperator === 's_sl' ? 'larger' : 'smaller';
+      v.sizeValue = props.size || '';
+      v.sizeUnit = props.sizeUnit === 's_skb' ? 'KB' : 'MB';
+    }
+    if(variantHasCriteria(v)) label.variants.push(v);
+    label.actions.archive = props.shouldArchive === 'true';
+    label.actions.markRead = props.shouldMarkAsRead === 'true';
+    label.actions.star = props.shouldStar === 'true';
+    label.actions.neverSpam = props.shouldNeverSpam === 'true';
+    label.actions.alwaysImportant = props.shouldAlwaysMarkAsImportant === 'true';
+    label.actions.neverImportant = props.shouldNeverMarkAsImportant === 'true';
+    label.actions.trash = props.shouldTrash === 'true';
+    label.actions.forward = !!props.forwardTo;
+    label.forwardEmail = props.forwardTo || '';
+    label.updatedAt = nowISO();
+    count++;
+  });
+  saveState();
+  return count;
+}
+
+// ---------- Export: Outlook CSV guide ----------
+function csvCell(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }
+function slug(s){ return String(s).replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-+|-+$/g,'') || 'account'; }
+
+function buildOutlookCSV(validLabels, labels){
+  const header = ['Priority','Label / Folder Path','From يحتوي على','To يحتوي على','Subject يحتوي على','Body يحتوي على','Advanced Query (Gmail فقط)','استثناء','فيه مرفق','الحجم','Skip Inbox','Mark Read','Star','Never Spam','Always Important','Never Important','Delete','Stop Processing More Rules','Forward To','أُنشئ','آخر تعديل'];
+  const rows = [header];
+  validLabels.forEach((l, i) => {
+    const fullPath = getPathNames(labels, l).join(' > ');
+    const variants = l.variants.filter(variantHasCriteria);
+    variants.forEach((v, vi) => {
+      const sizeTxt = (v.sizeOp && v.sizeValue) ? `${v.sizeOp === 'larger' ? '>' : '<'} ${v.sizeValue} ${v.sizeUnit}` : '';
+      const priority = variants.length > 1 ? `${i+1}.${vi+1}` : `${i+1}`;
+      rows.push([
+        priority, fullPath, v.from.join(' | '), v.to.join(' | '), v.subject.join(' | '),
+        v.body.join(' | '), v.advancedQuery || '', v.exclude.join(' | '), v.hasAttachment ? 'Yes' : '', sizeTxt,
+        l.actions.archive ? 'Yes' : '', l.actions.markRead ? 'Yes' : '', l.actions.star ? 'Yes' : '',
+        l.actions.neverSpam ? 'Yes' : '', l.actions.alwaysImportant ? 'Yes' : '', l.actions.neverImportant ? 'Yes' : '',
+        l.actions.trash ? 'Yes' : '', l.actions.stopProcessing ? 'Yes' : '', l.actions.forward ? (l.forwardEmail||'Yes') : '',
+        fmtDate(l.createdAt), fmtDate(l.updatedAt)
+      ]);
+    });
+  });
+  return '\uFEFF' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+}
+
+document.getElementById('exportOutlook').addEventListener('click', () => {
+  const acc = currentAccount();
+  const validLabels = acc.labels.filter(hasCriteria);
+  if(!validLabels.length){ alert('مفيش Label بشروط كافية للتصدير.'); return; }
+  const csv = buildOutlookCSV(validLabels, acc.labels);
+  downloadFile(csv, `outlook-rules-guide-${slug(acc.name)}.csv`, 'text/csv;charset=utf-8');
+  setStatus('تم تصدير الملف ✓', 'ok');
+});
+
+// ---------- Backup / Restore full state ----------
+document.getElementById('backupJson').addEventListener('click', () => {
+  downloadFile(JSON.stringify(state, null, 2), `ruleforge-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+  setStatus('تم تنزيل النسخة الاحتياطية ✓', 'ok');
+});
+document.getElementById('restoreJson').addEventListener('click', () => document.getElementById('restoreJsonFile').click());
+document.getElementById('restoreJsonFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const parsed = JSON.parse(await file.text());
+    if(!parsed || !Array.isArray(parsed.accounts)) throw new Error('bad shape');
+    if(!confirm('هيتم استبدال كل البيانات الحالية بالنسخة الاحتياطية دي. متأكد؟')) return;
+    state = migrateLegacy(parsed);
+    activeAccountId = state.accounts[0].id; activeLabelId = null;
+    saveState(); renderAll();
+    setStatus('تم استعادة النسخة الاحتياطية ✓', 'ok');
+  }catch(err){ alert('ملف النسخة الاحتياطية مش صالح.'); }
+  e.target.value = '';
+});
+
+function downloadFile(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---------- Blocked / VIP senders ----------
+function renderSimpleTagList(tagsId, inputId, btnId, arr){
+  const wrap = document.getElementById(tagsId);
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  wrap.innerHTML = '';
+  arr.forEach((val, idx) => {
+    const tag = document.createElement('span'); tag.className = 'tag';
+    tag.innerHTML = `<span>${escapeHtml(val)}</span><button data-idx="${idx}">×</button>`;
+    tag.querySelector('button').addEventListener('click', () => {
+      arr.splice(idx,1); saveState(); renderSimpleTagList(tagsId, inputId, btnId, arr);
+    });
+    wrap.appendChild(tag);
+  });
+  function commit(){
+    const val = input.value.trim(); if(!val) return;
+    arr.push(val); input.value = '';
+    saveState(); renderSimpleTagList(tagsId, inputId, btnId, arr); input.focus();
+  }
+  btn.onclick = commit;
+  input.onkeydown = e => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } };
+}
+
+function buildSimpleGmailXML(title, values, actionProps){
+  const now = isoNoMillis(new Date());
+  const fromVal = values.map(v => `(${v})`).join(' OR ');
+  const props = [`<apps:property name='from' value='${xmlEscape(fromVal)}'/>`, ...actionProps];
+  const entry = `<entry>\n<category term='filter'></category>\n<title>Mail Filter</title>\n<id>tag:mail.google.com,2008:filter:${Date.now()}</id>\n<updated>${now}</updated>\n<content></content>\n${props.join('\n')}\n</entry>\n`;
+  return `<?xml version='1.0' encoding='UTF-8'?>\n<feed xmlns='http://www.w3.org/2005/Atom' xmlns:apps='http://schemas.google.com/apps/2006'>\n<title>${xmlEscape(title)}</title>\n<id>tag:mail.google.com,2008:filters:${Date.now()}</id>\n<updated>${now}</updated>\n<author><name>RuleForge</name><email>user@gmail.com</email></author>\n${entry}</feed>`;
+}
+function buildSimpleCSV(values){
+  const rows = [['Email / Domain'], ...values.map(v => [v])];
+  return '\uFEFF' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+}
+
+const listsPage = document.getElementById('listsPage');
+document.getElementById('listsBtn').addEventListener('click', () => {
+  const acc = currentAccount();
+  document.getElementById('listsPageAcc').textContent = '— ' + acc.name;
+  renderSimpleTagList('blockedTags','blockedInput','blockedAddBtn', acc.blockedSenders);
+  renderSimpleTagList('vipTags','vipInput','vipAddBtn', acc.vipSenders);
+  listsPage.classList.add('show');
+});
+document.getElementById('listsBackBtn').addEventListener('click', () => listsPage.classList.remove('show'));
+
+document.getElementById('exportBlockedGmail').addEventListener('click', () => {
+  const acc = currentAccount();
+  if(!acc.blockedSenders.length){ alert('قايمة المحظورين فاضية.'); return; }
+  const xml = buildSimpleGmailXML('Blocked Senders', acc.blockedSenders, [`<apps:property name='shouldTrash' value='true'/>`]);
+  downloadFile(xml, `gmail-blocked-${slug(acc.name)}.xml`, 'application/xml');
+  setStatus('تم تصدير قائمة المحظورين ✓', 'ok');
+});
+document.getElementById('exportBlockedCSV').addEventListener('click', () => {
+  const acc = currentAccount();
+  if(!acc.blockedSenders.length){ alert('قايمة المحظورين فاضية.'); return; }
+  downloadFile(buildSimpleCSV(acc.blockedSenders), `blocked-senders-${slug(acc.name)}.csv`, 'text/csv;charset=utf-8');
+  setStatus('تم تصدير قائمة المحظورين ✓', 'ok');
+});
+document.getElementById('exportVipGmail').addEventListener('click', () => {
+  const acc = currentAccount();
+  if(!acc.vipSenders.length){ alert('قايمة المهمين فاضية.'); return; }
+  const xml = buildSimpleGmailXML('VIP Senders', acc.vipSenders, [
+    `<apps:property name='shouldStar' value='true'/>`,
+    `<apps:property name='shouldAlwaysMarkAsImportant' value='true'/>`,
+    `<apps:property name='shouldNeverSpam' value='true'/>`
+  ]);
+  downloadFile(xml, `gmail-vip-${slug(acc.name)}.xml`, 'application/xml');
+  setStatus('تم تصدير قائمة المهمين ✓', 'ok');
+});
+document.getElementById('exportVipCSV').addEventListener('click', () => {
+  const acc = currentAccount();
+  if(!acc.vipSenders.length){ alert('قايمة المهمين فاضية.'); return; }
+  downloadFile(buildSimpleCSV(acc.vipSenders), `vip-senders-${slug(acc.name)}.csv`, 'text/csv;charset=utf-8');
+  setStatus('تم تصدير قائمة المهمين ✓', 'ok');
+});
+
+// ---------- Test email against labels ----------
+function textIncludes(haystack, needle){ return String(haystack||'').toLowerCase().includes(String(needle||'').toLowerCase()); }
+
+function matchVariant(v, test){
+  const reasons = [];
+  if(v.from.length){
+    const hit = v.from.find(x => textIncludes(test.from, x));
+    if(!hit) return null; reasons.push(`From يحتوي على "${hit}"`);
+  }
+  if(v.to.length){
+    const hit = v.to.find(x => textIncludes(test.to, x));
+    if(!hit) return null; reasons.push(`To يحتوي على "${hit}"`);
+  }
+  if(v.subject.length){
+    const hit = v.subject.find(x => textIncludes(test.subject, x));
+    if(!hit) return null; reasons.push(`Subject يحتوي على "${hit}"`);
+  }
+  if(v.body.length){
+    const hit = v.body.find(x => textIncludes(test.body, x));
+    if(!hit) return null; reasons.push(`Body يحتوي على "${hit}"`);
+  }
+  if(v.exclude.length){
+    const combined = [test.from, test.to, test.subject, test.body].join(' ');
+    const bad = v.exclude.find(x => textIncludes(combined, x));
+    if(bad) return null;
+  }
+  if(v.hasAttachment){
+    if(!test.hasAttachment) return null;
+    reasons.push('فيه مرفق');
+  }
+  return reasons;
+}
+
+function matchLabel(label, test){
+  for(const v of label.variants){
+    if(!variantHasCriteria(v)) continue;
+    const reasons = matchVariant(v, test);
+    if(reasons) return reasons;
+  }
+  return null;
+}
+
+function runTest(){
+  const acc = currentAccount();
+  const test = {
+    from: document.getElementById('testFrom').value,
+    to: document.getElementById('testTo').value,
+    subject: document.getElementById('testSubject').value,
+    body: document.getElementById('testBody').value,
+    hasAttachment: document.getElementById('testAttachment').checked
+  };
+  const box = document.getElementById('testResults');
+  if(!test.from && !test.to && !test.subject && !test.body && !test.hasAttachment){
+    box.innerHTML = '<div class="test-empty">املا بيانات الإيميل الوهمي على الشمال عشان تشوف هنا أنهي Labels هتتفعّل عليه.</div>';
+    return;
+  }
+  const hits = [];
+  acc.labels.forEach(label => {
+    const reasons = matchLabel(label, test);
+    if(reasons) hits.push({label, reasons});
+  });
+  if(!hits.length){ box.innerHTML = '<div class="test-empty">مفيش أي Label هيتفعّل على الإيميل ده بالبيانات المكتوبة.</div>'; return; }
+  box.innerHTML = hits.map(h => `<div class="test-hit"><b>${escapeHtml(getPathNames(acc.labels, h.label).join('/'))}</b><div class="reasons">${h.reasons.join('، ')}</div></div>`).join('');
+}
+
+// ---------- Conflict detection ----------
+function computeConflicts(labels){
+  const valid = labels.filter(hasCriteria);
+  const conflicts = [];
+  const seen = new Set();
+  for(let i=0;i<valid.length;i++){
+    for(let j=i+1;j<valid.length;j++){
+      const a = valid[i], b = valid[j];
+      a.variants.filter(variantHasCriteria).forEach(va0 => {
+        b.variants.filter(variantHasCriteria).forEach(vb0 => {
+          ['from','to','subject','body'].forEach(field => {
+            va0[field].forEach(va => {
+              vb0[field].forEach(vb => {
+                if(textIncludes(va, vb) || textIncludes(vb, va)){
+                  const key = a.id+'|'+b.id+'|'+field+'|'+va+'|'+vb;
+                  if(seen.has(key)) return; seen.add(key);
+                  conflicts.push({ a: getPathNames(labels,a).join('/'), b: getPathNames(labels,b).join('/'), field, va, vb });
+                }
+              });
+            });
+          });
+        });
+      });
+    }
+  }
+  return conflicts;
+}
+
+const FIELD_LABELS_AR = { from:'From', to:'To', subject:'Subject', body:'Body' };
+function renderConflicts(){
+  const acc = currentAccount();
+  const conflicts = computeConflicts(acc.labels);
+  const wrap = document.getElementById('conflictsWrap');
+  if(!conflicts.length){ wrap.innerHTML = '<div class="test-empty">مفيش تعارضات ظاهرة بين Labels الحساب ده.</div>'; return; }
+  wrap.innerHTML = `<table class="conflicts-table"><thead><tr><th></th><th>Label الأول</th><th>Label الثاني</th><th>الحقل</th><th>القيمة المشتركة</th></tr></thead><tbody>
+    ${conflicts.map(c => `<tr><td class="warn-icon">${ICONS.warning}</td><td>${escapeHtml(c.a)}</td><td>${escapeHtml(c.b)}</td><td>${FIELD_LABELS_AR[c.field]}</td><td class="val">${escapeHtml(c.va)} / ${escapeHtml(c.vb)}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ---------- Dedicated Test page wiring ----------
+const testPage = document.getElementById('testPage');
+document.getElementById('testConflictsBtn').addEventListener('click', () => {
+  document.getElementById('testPageAcc').textContent = '— ' + currentAccount().name;
+  ['testFrom','testTo','testSubject','testBody'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('testAttachment').checked = false;
+  document.getElementById('testResults').innerHTML = '<div class="test-empty">املا بيانات الإيميل الوهمي على الشمال عشان تشوف هنا أنهي Labels هتتفعّل عليه.</div>';
+  renderConflicts();
+  testPage.classList.add('show');
+});
+document.getElementById('testBackBtn').addEventListener('click', () => testPage.classList.remove('show'));
+['testFrom','testTo','testSubject','testBody','testAttachment'].forEach(id => {
+  document.getElementById(id).addEventListener('input', runTest);
+  document.getElementById(id).addEventListener('change', runTest);
+});
+
+// ---------- Export all accounts ----------
+document.getElementById('exportAllBtn').addEventListener('click', async () => {
+  let exported = 0, skipped = 0;
+  for(const acc of state.accounts){
+    const validLabels = acc.labels.filter(hasCriteria);
+    if(!validLabels.length){ skipped++; continue; }
+    const xml = buildGmailXML(validLabels, acc.labels, acc);
+    downloadFile(xml, `gmail-filters-${slug(acc.name)}.xml`, 'application/xml');
+    await new Promise(r => setTimeout(r, 350));
+    const csv = buildOutlookCSV(validLabels, acc.labels);
+    downloadFile(csv, `outlook-rules-guide-${slug(acc.name)}.csv`, 'text/csv;charset=utf-8');
+    await new Promise(r => setTimeout(r, 350));
+    exported++;
+  }
+  setStatus(skipped ? `تم تصدير ${exported} حساب — تخطي ${skipped} حساب فاضي` : `تم تصدير ${exported} حساب بكل الملفات ✓`, skipped ? 'warn' : 'ok');
+});
+
+// ---------- Init ----------
+window.addEventListener('beforeunload', (e) => {
+  const hasData = state && state.accounts && state.accounts.some(a => a.labels.length);
+  if(hasData){ e.preventDefault(); e.returnValue = ''; }
+});
+
+(async function init(){
+  document.getElementById('content').innerHTML = '<div class="empty">بيحمّل البيانات المحفوظة...</div>';
+  await loadState();
+  renderAll();
+})();
+</script>
+</body>
+</html>
