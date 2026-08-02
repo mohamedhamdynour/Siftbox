@@ -38,7 +38,7 @@ Everything runs entirely in your browser. There's no backend, no analytics, no a
 | | |
 |---|---|
 | 🏷️ **Labels & sub-labels** | Organize rules hierarchically, just like Gmail's nested labels (`Finance/Banks`) |
-| 🧩 **Multiple filters per label** | One label, several independent rule combinations — each shown as `Filter (From & Subject)` |
+| 🧩 **Multiple filters per label, each with its own actions** | One label, several independent rule combinations — each shown as `Filter (From & Subject)`, each with its own actions (one filter can delete, another can just star) |
 | 🔀 **Drag-and-drop priority** | Reorder rules — matters for Outlook, informational for Gmail |
 | 🧪 **Filter tester** | Simulate a fake email and see instantly which labels would fire, and why |
 | ⚠️ **Conflict detector** | Flags labels with overlapping conditions before they surprise you |
@@ -131,6 +131,7 @@ Plain **HTML + CSS + vanilla JavaScript** — a single self-contained file. No b
 
 **Option 2 — Locally:** just download `index.html` and open it in any browser. No server needed.
 
+---
 
 ## 📄 License
 
