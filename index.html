@@ -180,11 +180,6 @@
 
   .section-title{ font-size:12px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.07em; font-weight:700; margin:30px 0 14px; padding-top:20px; border-top:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; }
 
-  .editor-tabs{ display:flex; gap:4px; background:var(--panel); padding:4px; border-radius:11px; border:1px solid var(--line-soft); width:fit-content; margin:22px 0 20px; }
-  .editor-tab{ padding:8px 20px; border-radius:8px; border:none; background:transparent; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:.15s; }
-  .editor-tab.active{ background:var(--panel-2); color:var(--text); box-shadow:0 0 0 1px var(--line); }
-  .editor-tab:hover:not(.active){ color:var(--text); }
-
   .advanced-toggle{ display:flex; align-items:center; gap:7px; background:none; border:none; color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; padding:8px 0; margin-top:4px; }
   .advanced-toggle:hover{ color:var(--brass); }
   .advanced-toggle svg{ width:12px; height:12px; transition:transform .2s; }
@@ -224,6 +219,8 @@
   .variant-card-actions .icon-btn{ width:28px; height:28px; border-radius:7px; }
   .variant-card-actions .icon-btn svg{ width:13px; height:13px; }
   .variant-card-body{ font-size:12.5px; color:var(--muted); line-height:1.7; }
+  .variant-card-acts{ font-size:11.5px; color:var(--teal); margin-top:4px; }
+  .variant-card-acts.empty{ color:var(--muted-2); font-style:italic; }
 
   .export-bar{ border-top:1px solid var(--line); background:var(--bg-2); }
   .export-toggle-row{ display:flex; align-items:center; gap:12px; padding:11px 18px; cursor:pointer; user-select:none; }
@@ -546,7 +543,7 @@
           <li><b>تصنيف رئيسي</b> — من مربع الإضافة أعلى القائمة الجانبية</li>
           <li><b>تصنيف فرعي</b> — بزرار "+" اللي بيظهر عند الـ hover على أي تصنيف، أو زرار "+ تصنيف فرعي" جوه صفحة التصنيف نفسه</li>
         </ul>
-        <p>التصنيف الفرعي بياخد شكل <span class="kbd">Parent/Child</span> عند التصدير لـ Gmail (نفس صيغة Gmail الرسمية للتصنيفات المتداخلة)، وبياخد إعدادات "الإجراءات" من أبوه تلقائياً وقت الإنشاء (تقدر تعدّلها بعدين).</p>
+        <p>التصنيف الفرعي بياخد شكل <span class="kbd">Parent/Child</span> عند التصدير لـ Gmail (نفس صيغة Gmail الرسمية للتصنيفات المتداخلة). بيبدأ من غير أي فلاتر — تضيفله فلاتره الخاصة زي أي تصنيف تاني.</p>
         <div class="callout callout-example"><b>مثال:</b> Finance ← Banks ← NBE يبقى Label اسمه فعلياً <span class="kbd">Finance/Banks/NBE</span> في Gmail.</div>
       </section>
 
@@ -575,7 +572,8 @@
 
       <section class="help-section" id="h-actions">
         <h3>الإجراءات عند التطابق</h3>
-        <p>مشتركة على مستوى التصنيف كله (كل الفلاتر تحته بتنفذ نفس الإجراءات): Skip Inbox, Mark as read, Star it, Never send to Spam, Always/Never mark as important, Delete it, Stop processing more rules (Outlook فقط), Forward to (Gmail فقط).</p>
+        <p><b>كل فلتر له إجراءاته الخاصة</b> — مش مشتركة على مستوى التصنيف. يعني نفس الـ Label ممكن يكون فيه فلتر يحذف الإيميل مباشرة وفلتر تاني تحته بس يعلّمه كمقروء، حسب الشرط اللي اتفعّل. الإجراءات المتاحة: Skip Inbox, Mark as read, Star it, Never send to Spam, Always/Never mark as important, Delete it, Stop processing more rules (Outlook فقط), Forward to (Gmail فقط).</p>
+        <div class="callout callout-tip">لما تضيف فلتر جديد، إجراءاته بتتملأ تلقائي بنفس إجراءات آخر فلتر أضفته على نفس التصنيف (بس تقدر تغيّرها) — عشان توفّر وقت لو الفلاتر عندك بتتشابه غالباً.</div>
       </section>
 
       <section class="help-section" id="h-priority">
@@ -719,8 +717,6 @@ let dragState = null;
 let stagingVariant = null;
 let stagingLabelId = null;
 let editingVariantId = null;
-let labelEditorTab = 'filters';
-let tabForLabelId = null;
 let advancedOpen = false;
 let selectionMode = false;
 let selectedLabelIds = new Set();
@@ -788,10 +784,12 @@ function defaultState(){
   ]};
 }
 
+const DEFAULT_ACTIONS = () => ({ archive:false, markRead:false, star:false, neverSpam:false, trash:false, forward:false, alwaysImportant:false, neverImportant:false, stopProcessing:false });
+
 function emptyVariant(){
-  return { id: uid('v'), from:[], to:[], subject:[], body:[], exclude:[], hasAttachment:false, sizeOp:'', sizeValue:'', sizeUnit:'MB', advancedQuery:'' };
+  return { id: uid('v'), from:[], to:[], subject:[], body:[], exclude:[], hasAttachment:false, sizeOp:'', sizeValue:'', sizeUnit:'MB', advancedQuery:'', actions: DEFAULT_ACTIONS(), forwardEmail:'' };
 }
-function fixVariantShape(v){
+function fixVariantShape(v, fallbackActions, fallbackForward){
   v.id = v.id || uid('v');
   ['from','to','subject','body','exclude'].forEach(k => { if(!v[k]) v[k] = []; });
   if(v.hasAttachment === undefined) v.hasAttachment = false;
@@ -799,6 +797,9 @@ function fixVariantShape(v){
   if(v.sizeValue === undefined) v.sizeValue = '';
   if(v.sizeUnit === undefined) v.sizeUnit = 'MB';
   if(v.advancedQuery === undefined) v.advancedQuery = '';
+  if(!v.actions) v.actions = fallbackActions ? JSON.parse(JSON.stringify(fallbackActions)) : DEFAULT_ACTIONS();
+  else Object.keys(DEFAULT_ACTIONS()).forEach(k => { if(v.actions[k] === undefined) v.actions[k] = false; });
+  if(v.forwardEmail === undefined) v.forwardEmail = fallbackForward || '';
   return v;
 }
 function variantHasCriteria(v){
@@ -814,21 +815,22 @@ function shapeOf(v){
 
 function fixLabelShape(l){
   if(l.parentId === undefined) l.parentId = null;
-  if(!l.actions) l.actions = {};
-  ['archive','markRead','star','neverSpam','trash','forward','alwaysImportant','neverImportant','stopProcessing'].forEach(k => { if(l.actions[k] === undefined) l.actions[k] = false; });
+  const fallbackActions = l.actions || DEFAULT_ACTIONS();
+  const fallbackForward = l.forwardEmail || '';
   if(!Array.isArray(l.variants)){
     // migrate old single-conditions-per-label model into variants[0]
     const oc = l.conditions || {};
     const v = fixVariantShape({
       id: uid('v'), from: oc.from||[], to: oc.to||[], subject: oc.subject||[], body: oc.body||[], exclude: oc.exclude||[],
       hasAttachment: !!oc.hasAttachment, sizeOp: oc.sizeOp||'', sizeValue: oc.sizeValue||'', sizeUnit: oc.sizeUnit||'MB', advancedQuery: oc.advancedQuery||''
-    });
+    }, fallbackActions, fallbackForward);
     l.variants = variantHasCriteria(v) ? [v] : [];
     delete l.conditions;
   } else {
-    l.variants.forEach(fixVariantShape);
+    l.variants.forEach(v => fixVariantShape(v, fallbackActions, fallbackForward));
   }
-  if(l.forwardEmail === undefined) l.forwardEmail = '';
+  delete l.actions;
+  delete l.forwardEmail;
   if(!l.createdAt) l.createdAt = nowISO();
   if(!l.updatedAt) l.updatedAt = l.createdAt;
   return l;
@@ -902,8 +904,7 @@ function newLabel(name, parentId){
   return {
     id: uid('l'), name, parentId: parentId || null,
     variants: [],
-    actions: { archive:false, markRead:false, star:false, neverSpam:false, trash:false, forward:false, alwaysImportant:false, neverImportant:false, stopProcessing:false },
-    forwardEmail:'', createdAt:t, updatedAt:t
+    createdAt:t, updatedAt:t
   };
 }
 function hasCriteria(label){
@@ -1114,14 +1115,9 @@ function addChildLabel(parentId){
   if(!confirmLeaveStaging()) return;
   pushUndo();
   const labels = currentAccount().labels;
-  const parent = labels.find(l => l.id === parentId);
   const siblingNames = childrenOf(labels, parentId).map(l => l.name);
   const name = uniqueSiblingName('تصنيف فرعي جديد', siblingNames);
   const child = newLabel(name, parentId);
-  if(parent){
-    child.actions = JSON.parse(JSON.stringify(parent.actions));
-    child.forwardEmail = parent.forwardEmail;
-  }
   labels.push(child);
   activeLabelId = child.id;
   collapsedIds.delete(parentId);
@@ -1138,8 +1134,6 @@ function duplicateLabel(label){
   const name = uniqueSiblingName(label.name + ' (نسخة)', siblingNames);
   const copy = newLabel(name, label.parentId);
   copy.variants = JSON.parse(JSON.stringify(label.variants)).map(v => ({...v, id: uid('v')}));
-  copy.actions = JSON.parse(JSON.stringify(label.actions));
-  copy.forwardEmail = label.forwardEmail;
   const idx = labels.indexOf(label);
   labels.splice(idx + 1, 0, copy);
   activeLabelId = copy.id;
@@ -1198,28 +1192,30 @@ function describeVariantConditions(v){
   return parts.join('، ');
 }
 
+function describeVariantActions(v){
+  const acts = [];
+  if(v.actions.archive) acts.push('يتخطى Inbox');
+  if(v.actions.markRead) acts.push('يتعلّم كمقروء');
+  if(v.actions.star) acts.push('يتنجّم');
+  if(v.actions.neverSpam) acts.push('ميترسلش سبام أبداً');
+  if(v.actions.alwaysImportant) acts.push('يتعلّم كمهم دايماً');
+  if(v.actions.neverImportant) acts.push('ميتعلّمش كمهم أبداً');
+  if(v.actions.trash) acts.push('يتحذف مباشرة');
+  if(v.actions.stopProcessing) acts.push('وتتوقف أي قواعد تانية بعده (Outlook)');
+  if(v.actions.forward && v.forwardEmail) acts.push(`يتحوّل لـ ${v.forwardEmail}`);
+  return acts;
+}
+
 function buildSummary(label, fullPath){
   const validVariants = label.variants.filter(variantHasCriteria);
   if(!validVariants.length) return null;
-
-  const acts = [];
-  acts.push(`يتصنّف تحت "${fullPath}"`);
-  if(label.actions.archive) acts.push('يتخطى Inbox');
-  if(label.actions.markRead) acts.push('يتعلّم كمقروء');
-  if(label.actions.star) acts.push('يتنجّم');
-  if(label.actions.neverSpam) acts.push('ميترسلش سبام أبداً');
-  if(label.actions.alwaysImportant) acts.push('يتعلّم كمهم دايماً');
-  if(label.actions.neverImportant) acts.push('ميتعلّمش كمهم أبداً');
-  if(label.actions.trash) acts.push('يتحذف مباشرة');
-  if(label.actions.stopProcessing) acts.push('وتتوقف أي قواعد تانية بعده (Outlook)');
-  if(label.actions.forward && label.forwardEmail) acts.push(`يتحوّل لـ ${label.forwardEmail}`);
-  const actsLine = acts.join('، ') + '.';
-
-  if(validVariants.length === 1){
-    return `أي إيميل ${describeVariantConditions(validVariants[0])} — ${actsLine}`;
-  }
-  const lines = validVariants.map(v => `<b>Filter (${variantShapeLabel(v)}):</b> أي إيميل ${describeVariantConditions(v)}`);
-  return lines.join('<br>') + `<br><br>في كل الحالات دي: ${actsLine}`;
+  const multi = validVariants.length > 1;
+  const lines = validVariants.map(v => {
+    const acts = [`يتصنّف تحت "${fullPath}"`, ...describeVariantActions(v)];
+    const prefix = multi ? `<b>Filter (${variantShapeLabel(v)}):</b> ` : '';
+    return `${prefix}أي إيميل ${describeVariantConditions(v)} — ${acts.join('، ')}.`;
+  });
+  return lines.join('<br>');
 }
 
 function renderOverview(content){
@@ -1245,7 +1241,7 @@ function renderOverview(content){
     card.className = 'overview-card' + (depth ? ' child' : '');
     card.style.marginRight = (depth * 22) + 'px';
     const filtersHtml = validVariants.length
-      ? validVariants.map(v => `<div class="ov-filter"><b>Filter (${escapeHtml(variantShapeLabel(v))}):</b> ${escapeHtml(describeVariantConditions(v))}</div>`).join('')
+      ? validVariants.map(v => `<div class="ov-filter"><b>Filter (${escapeHtml(variantShapeLabel(v))}):</b> ${escapeHtml(describeVariantConditions(v))}${describeVariantActions(v).length ? ' — ' + escapeHtml(describeVariantActions(v).join('، ')) : ''}</div>`).join('')
       : '<div class="ov-filter empty">لا يوجد فلاتر مضافة لسه</div>';
     card.innerHTML = `
       <div class="overview-card-head">
@@ -1268,8 +1264,6 @@ function renderContent(){
   const labels = currentAccount().labels;
   const path = getPathNames(labels, label);
   const fullPath = path.join('/');
-
-  if(tabForLabelId !== label.id){ labelEditorTab = 'filters'; tabForLabelId = label.id; }
 
   if(path.length > 1){
     const bc = document.createElement('div'); bc.className = 'breadcrumb';
@@ -1335,29 +1329,14 @@ function renderContent(){
   }
   refreshSummary();
 
-  // ---- Tabs ----
-  const validCount = label.variants.filter(variantHasCriteria).length;
-  const tabsRow = document.createElement('div'); tabsRow.className = 'editor-tabs';
-  tabsRow.innerHTML = `
-    <button class="editor-tab${labelEditorTab==='filters'?' active':''}" data-tab="filters">الفلاتر (${validCount})</button>
-    <button class="editor-tab${labelEditorTab==='actions'?' active':''}" data-tab="actions">الإجراءات</button>`;
-  content.appendChild(tabsRow);
-  tabsRow.querySelectorAll('.editor-tab').forEach(btn => btn.addEventListener('click', () => {
-    if(btn.dataset.tab === labelEditorTab) return;
-    if(!confirmLeaveStaging()) return;
-    stagingVariant = emptyVariant(); editingVariantId = null;
-    labelEditorTab = btn.dataset.tab; renderContent();
-  }));
-
-  if(labelEditorTab === 'filters') renderFiltersTab(content, label, refreshSummary);
-  else renderActionsTab(content, label, refreshSummary);
+  renderFilterEditor(content, label, refreshSummary);
 }
 
-function renderFiltersTab(content, label, refreshSummary){
+function renderFilterEditor(content, label, refreshSummary){
   ensureStaging(label.id);
 
   const stagingTitle = document.createElement('div'); stagingTitle.className = 'section-title'; stagingTitle.style.marginTop = '4px';
-  stagingTitle.textContent = editingVariantId ? 'تعديل فلتر موجود' : 'بيانات فلتر جديد — املأ الحقول اللي محتاجها بس';
+  stagingTitle.textContent = editingVariantId ? 'تعديل فلتر موجود — شروطه وإجراءاته الخاصة' : `بيانات فلتر جديد — املأ الحقول اللي محتاجها بس (${label.variants.filter(variantHasCriteria).length} فلتر حالياً)`;
   content.appendChild(stagingTitle);
 
   const grid = document.createElement('div'); grid.className = 'conditions-grid';
@@ -1417,6 +1396,40 @@ function renderFiltersTab(content, label, refreshSummary){
     refreshStagingPreview(label);
   }));
 
+  // ---- Actions for THIS filter ----
+  const actionsTitle = document.createElement('div'); actionsTitle.className = 'section-title';
+  actionsTitle.textContent = 'إجراءات هذا الفلتر';
+  content.appendChild(actionsTitle);
+
+  const agrid = document.createElement('div'); agrid.className = 'actions-grid';
+  agrid.innerHTML = `
+    ${checkRow('archive','Skip Inbox — لا يظهر في Inbox')}
+    ${checkRow('markRead','Mark as read')}
+    ${checkRow('star','Star it')}
+    ${checkRow('neverSpam','Never send to Spam')}
+    ${checkRow('alwaysImportant','Always mark as important')}
+    ${checkRow('neverImportant','Never mark as important')}
+    ${checkRow('trash','Delete it')}
+    ${checkRow('stopProcessing','إيقاف باقي القواعد (Stop processing — Outlook فقط)')}
+    ${checkRow('forward','Forward to (Gmail فقط)')}
+    <div class="forward-input" id="forwardWrap"><input type="email" id="forwardEmail" placeholder="forward@example.com" value="${escapeAttr(stagingVariant.forwardEmail||'')}"></div>
+  `;
+  content.appendChild(agrid);
+  document.getElementById('forwardWrap').classList.toggle('show', stagingVariant.actions.forward);
+  document.getElementById('forwardEmail').addEventListener('input', e => { stagingVariant.forwardEmail = e.target.value.trim(); refreshStagingPreview(label); });
+
+  Object.keys(stagingVariant.actions).forEach(k => {
+    const cb = document.getElementById('act-'+k); if(!cb) return;
+    cb.checked = stagingVariant.actions[k];
+    cb.addEventListener('change', () => {
+      stagingVariant.actions[k] = cb.checked;
+      if(k === 'alwaysImportant' && cb.checked){ stagingVariant.actions.neverImportant = false; document.getElementById('act-neverImportant').checked = false; }
+      if(k === 'neverImportant' && cb.checked){ stagingVariant.actions.alwaysImportant = false; document.getElementById('act-alwaysImportant').checked = false; }
+      document.getElementById('forwardWrap').classList.toggle('show', stagingVariant.actions.forward);
+      refreshStagingPreview(label);
+    });
+  });
+
   const stagingPreview = document.createElement('div'); stagingPreview.id = 'stagingPreview'; stagingPreview.className = 'label-hint'; stagingPreview.style.marginTop = '14px';
   content.appendChild(stagingPreview);
 
@@ -1438,37 +1451,6 @@ function renderFiltersTab(content, label, refreshSummary){
   const variantsList = document.createElement('div'); variantsList.id = 'variantsList';
   content.appendChild(variantsList);
   renderVariantList(label, variantsList);
-}
-
-function renderActionsTab(content, label, refreshSummary){
-  const agrid = document.createElement('div'); agrid.className = 'actions-grid'; agrid.style.marginTop = '4px';
-  agrid.innerHTML = `
-    ${checkRow('archive','Skip Inbox — لا يظهر في Inbox')}
-    ${checkRow('markRead','Mark as read')}
-    ${checkRow('star','Star it')}
-    ${checkRow('neverSpam','Never send to Spam')}
-    ${checkRow('alwaysImportant','Always mark as important')}
-    ${checkRow('neverImportant','Never mark as important')}
-    ${checkRow('trash','Delete it')}
-    ${checkRow('stopProcessing','إيقاف باقي القواعد (Stop processing — Outlook فقط)')}
-    ${checkRow('forward','Forward to (Gmail فقط)')}
-    <div class="forward-input" id="forwardWrap"><input type="email" id="forwardEmail" placeholder="forward@example.com" value="${escapeAttr(label.forwardEmail||'')}"></div>
-  `;
-  content.appendChild(agrid);
-  document.getElementById('forwardWrap').classList.toggle('show', label.actions.forward);
-  document.getElementById('forwardEmail').addEventListener('change', e => { label.forwardEmail = e.target.value.trim(); label.updatedAt = nowISO(); saveState(); refreshSummary(); });
-
-  Object.keys(label.actions).forEach(k => {
-    const cb = document.getElementById('act-'+k); if(!cb) return;
-    cb.checked = label.actions[k];
-    cb.addEventListener('change', () => {
-      label.actions[k] = cb.checked;
-      if(k === 'alwaysImportant' && cb.checked){ label.actions.neverImportant = false; document.getElementById('act-neverImportant').checked = false; }
-      if(k === 'neverImportant' && cb.checked){ label.actions.alwaysImportant = false; document.getElementById('act-alwaysImportant').checked = false; }
-      document.getElementById('forwardWrap').classList.toggle('show', label.actions.forward);
-      label.updatedAt = nowISO(); saveState(); refreshSummary();
-    });
-  });
 }
 
 function checkRow(key, text){ return `<div class="check-row"><input type="checkbox" id="act-${key}"><label for="act-${key}">${text}</label></div>`; }
@@ -1497,7 +1479,16 @@ function renderTagInput(fieldKey, obj, placeholder, onChange){
 
 // ---------- Staging box: builds one filter-variant at a time for the open Label ----------
 function ensureStaging(labelId){
-  if(stagingLabelId !== labelId){ stagingVariant = emptyVariant(); stagingLabelId = labelId; editingVariantId = null; }
+  if(stagingLabelId !== labelId){
+    stagingVariant = emptyVariant();
+    const label = currentAccount().labels.find(l => l.id === labelId);
+    if(label && label.variants.length){
+      const last = label.variants[label.variants.length - 1];
+      stagingVariant.actions = JSON.parse(JSON.stringify(last.actions));
+      stagingVariant.forwardEmail = last.forwardEmail;
+    }
+    stagingLabelId = labelId; editingVariantId = null;
+  }
 }
 
 function refreshStagingPreview(label){
@@ -1513,7 +1504,7 @@ function refreshStagingPreview(label){
     el.textContent = `هيتحدّث الفلتر ده إلى: ${desc}`;
   }else{
     const match = label.variants.find(v => shapeOf(v) === shape);
-    el.textContent = match ? `هيندمج مع فلتر موجود بنفس الشكل: ${desc}` : `هيتضاف كفلتر جديد منفصل: ${desc}`;
+    el.textContent = match ? `هيندمج مع فلتر موجود بنفس الشكل (وهيحدّث إجراءاته): ${desc}` : `هيتضاف كفلتر جديد منفصل: ${desc}`;
   }
 }
 
@@ -1533,6 +1524,8 @@ function commitVariant(label){
       if(stagingVariant.hasAttachment) match.hasAttachment = true;
       if(stagingVariant.sizeOp && stagingVariant.sizeValue){ match.sizeOp = stagingVariant.sizeOp; match.sizeValue = stagingVariant.sizeValue; match.sizeUnit = stagingVariant.sizeUnit; }
       if(stagingVariant.advancedQuery && stagingVariant.advancedQuery.trim()) match.advancedQuery = stagingVariant.advancedQuery.trim();
+      match.actions = JSON.parse(JSON.stringify(stagingVariant.actions));
+      match.forwardEmail = stagingVariant.forwardEmail;
     } else {
       label.variants.push(JSON.parse(JSON.stringify(stagingVariant)));
     }
@@ -1571,7 +1564,7 @@ function renderVariantList(label, container){
           <button class="icon-btn variant-del" data-id="${v.id}" title="حذف">${ICONS.trash}</button>
         </div>
       </div>
-      <div class="variant-card-body">${escapeHtml(describeVariantConditions(v))}</div>
+      <div class="variant-card-body">${escapeHtml(describeVariantConditions(v))}${describeVariantActions(v).length ? `<div class="variant-card-acts">← ${escapeHtml(describeVariantActions(v).join('، '))}</div>` : '<div class="variant-card-acts empty">مفيش إجراءات متحددة لهذا الفلتر</div>'}</div>
     </div>`).join('');
   container.querySelectorAll('.variant-edit').forEach(btn => btn.addEventListener('click', () => editVariant(label, btn.dataset.id)));
   container.querySelectorAll('.variant-del').forEach(btn => btn.addEventListener('click', () => {
@@ -1694,14 +1687,14 @@ function buildGmailXML(validLabels, labels, acc){
         props.push(`<apps:property name='sizeUnit' value='${v.sizeUnit === 'MB' ? 's_smb' : 's_skb'}'/>`);
       }
       props.push(`<apps:property name='label' value='${xmlEscape(fullPath)}'/>`);
-      if(label.actions.archive) props.push(`<apps:property name='shouldArchive' value='true'/>`);
-      if(label.actions.markRead) props.push(`<apps:property name='shouldMarkAsRead' value='true'/>`);
-      if(label.actions.star) props.push(`<apps:property name='shouldStar' value='true'/>`);
-      if(label.actions.neverSpam) props.push(`<apps:property name='shouldNeverSpam' value='true'/>`);
-      if(label.actions.alwaysImportant) props.push(`<apps:property name='shouldAlwaysMarkAsImportant' value='true'/>`);
-      if(label.actions.neverImportant) props.push(`<apps:property name='shouldNeverMarkAsImportant' value='true'/>`);
-      if(label.actions.trash) props.push(`<apps:property name='shouldTrash' value='true'/>`);
-      if(label.actions.forward && label.forwardEmail) props.push(`<apps:property name='forwardTo' value='${xmlEscape(label.forwardEmail)}'/>`);
+      if(v.actions.archive) props.push(`<apps:property name='shouldArchive' value='true'/>`);
+      if(v.actions.markRead) props.push(`<apps:property name='shouldMarkAsRead' value='true'/>`);
+      if(v.actions.star) props.push(`<apps:property name='shouldStar' value='true'/>`);
+      if(v.actions.neverSpam) props.push(`<apps:property name='shouldNeverSpam' value='true'/>`);
+      if(v.actions.alwaysImportant) props.push(`<apps:property name='shouldAlwaysMarkAsImportant' value='true'/>`);
+      if(v.actions.neverImportant) props.push(`<apps:property name='shouldNeverMarkAsImportant' value='true'/>`);
+      if(v.actions.trash) props.push(`<apps:property name='shouldTrash' value='true'/>`);
+      if(v.actions.forward && v.forwardEmail) props.push(`<apps:property name='forwardTo' value='${xmlEscape(v.forwardEmail)}'/>`);
 
       entries += `<entry>
 <category term='filter'></category>
@@ -1786,16 +1779,16 @@ function importGmailXML(text){
       v.sizeValue = props.size || '';
       v.sizeUnit = props.sizeUnit === 's_skb' ? 'KB' : 'MB';
     }
+    v.actions.archive = props.shouldArchive === 'true';
+    v.actions.markRead = props.shouldMarkAsRead === 'true';
+    v.actions.star = props.shouldStar === 'true';
+    v.actions.neverSpam = props.shouldNeverSpam === 'true';
+    v.actions.alwaysImportant = props.shouldAlwaysMarkAsImportant === 'true';
+    v.actions.neverImportant = props.shouldNeverMarkAsImportant === 'true';
+    v.actions.trash = props.shouldTrash === 'true';
+    v.actions.forward = !!props.forwardTo;
+    v.forwardEmail = props.forwardTo || '';
     if(variantHasCriteria(v)) label.variants.push(v);
-    label.actions.archive = props.shouldArchive === 'true';
-    label.actions.markRead = props.shouldMarkAsRead === 'true';
-    label.actions.star = props.shouldStar === 'true';
-    label.actions.neverSpam = props.shouldNeverSpam === 'true';
-    label.actions.alwaysImportant = props.shouldAlwaysMarkAsImportant === 'true';
-    label.actions.neverImportant = props.shouldNeverMarkAsImportant === 'true';
-    label.actions.trash = props.shouldTrash === 'true';
-    label.actions.forward = !!props.forwardTo;
-    label.forwardEmail = props.forwardTo || '';
     label.updatedAt = nowISO();
     count++;
   });
@@ -1819,9 +1812,9 @@ function buildOutlookCSV(validLabels, labels){
       rows.push([
         priority, fullPath, v.from.join(' | '), v.to.join(' | '), v.subject.join(' | '),
         v.body.join(' | '), v.advancedQuery || '', v.exclude.join(' | '), v.hasAttachment ? 'Yes' : '', sizeTxt,
-        l.actions.archive ? 'Yes' : '', l.actions.markRead ? 'Yes' : '', l.actions.star ? 'Yes' : '',
-        l.actions.neverSpam ? 'Yes' : '', l.actions.alwaysImportant ? 'Yes' : '', l.actions.neverImportant ? 'Yes' : '',
-        l.actions.trash ? 'Yes' : '', l.actions.stopProcessing ? 'Yes' : '', l.actions.forward ? (l.forwardEmail||'Yes') : '',
+        v.actions.archive ? 'Yes' : '', v.actions.markRead ? 'Yes' : '', v.actions.star ? 'Yes' : '',
+        v.actions.neverSpam ? 'Yes' : '', v.actions.alwaysImportant ? 'Yes' : '', v.actions.neverImportant ? 'Yes' : '',
+        v.actions.trash ? 'Yes' : '', v.actions.stopProcessing ? 'Yes' : '', v.actions.forward ? (v.forwardEmail||'Yes') : '',
         fmtDate(l.createdAt), fmtDate(l.updatedAt)
       ]);
     });
